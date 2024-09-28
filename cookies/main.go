@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 func main() {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/hello-again", helloAgainHandler)
-	http.HandleFunc("/delete-cookie", deleteCookie)
+	http.HandleFunc("/delete-cookie", deleteCookieHandler)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
 	log.Println("server is running")
@@ -19,21 +20,41 @@ func main() {
 }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
-	_, err := req.Cookie("visit-counter")
-	if err != nil {
-		// counter cookie isn't present, so need to write it
-		cookie := &http.Cookie{
+	uidCookie, _ := req.Cookie("user-id")
+	if uidCookie == nil {
+		uidCookie := &http.Cookie{
+			Name:  "user-id",
+			Value: uuid.New().String(),
+		}
+		http.SetCookie(w, uidCookie)
+	}
+
+	visitCounterCookie, _ := req.Cookie("visit-counter")
+	if visitCounterCookie == nil {
+		visitCookie := &http.Cookie{
 			Name:  "visit-counter",
 			Value: "1",
 		}
-		http.SetCookie(w, cookie)
+		http.SetCookie(w, visitCookie)
 
 		w.Header().Set("content-type", "text/html")
-		io.WriteString(w, fmt.Sprintf("You have visites site for %s times.", cookie.Value))
+		io.WriteString(w, fmt.Sprintf("You have visites site for %s times.", visitCookie.Value))
 	} else {
 		// counter cookie is present - redirect to hello again page
 		http.Redirect(w, req, "/hello-again", http.StatusSeeOther)
 	}
+}
+
+func helloAgainHandler(w http.ResponseWriter, req *http.Request) {
+	cookie, err := updateVisitCounterCookie(req)
+	if err != nil {
+		// there is not counter cookie - return to first page http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
+	}
+
+	w.Header().Set("content-type", "text/html")
+	http.SetCookie(w, cookie)
+	io.WriteString(w, fmt.Sprintf("You have visites site for %s times. <a href='/delete-cookie'>Reset</a>", cookie.Value))
 }
 
 func updateVisitCounterCookie(req *http.Request) (*http.Cookie, error) {
@@ -53,20 +74,7 @@ func updateVisitCounterCookie(req *http.Request) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func helloAgainHandler(w http.ResponseWriter, req *http.Request) {
-	cookie, err := updateVisitCounterCookie(req)
-	if err != nil {
-		// there is not counter cookie - return to first page
-		http.Redirect(w, req, "/", http.StatusSeeOther)
-		return
-	}
-
-	w.Header().Set("content-type", "text/html")
-	http.SetCookie(w, cookie)
-	io.WriteString(w, fmt.Sprintf("You have visites site for %s times. <a href='/delete-cookie'>Reset</a>", cookie.Value))
-}
-
-func deleteCookie(w http.ResponseWriter, req *http.Request) {
+func deleteCookieHandler(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("visit-counter")
 	if err != nil {
 		// there is not counter cookie - return to first page
