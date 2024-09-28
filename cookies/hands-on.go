@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-	// http.HandleFunc("/", testHandler)
-
 	http.HandleFunc("/", rootHandler)
 
 	http.Handle("/favicon.ico", http.NotFoundHandler())
@@ -18,16 +16,6 @@ func main() {
 	log.Println("server is running")
 	http.ListenAndServe(":8080", nil)
 }
-
-// func testHandler(w http.ResponseWriter, req *http.Request) {
-// 	cookie, err := readCounterFromCookies(req)
-// 	if err != nil {
-// 		http.SetCookie(w, &http.Cookie{
-// 			Name:  "cookie",
-// 			Value: "1",
-// 		})
-// 	}
-// }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("visit-counter")
