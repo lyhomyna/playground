@@ -1,0 +1,28 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+    body {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center; 
+    }
+    p {
+      margin: 0;
+      padding: 3px;
+    }
+    h3 {
+      margin-top: 1rem;
+    }
+    </style>
+  </head>
+  <body>
+        <p>USERNAME {{ .Email }}</p>
+        <p>FIRSTNAME {{ .FirstName }}</p>
+        <p>LASTNAME {{ .LastName }}</p>
+
+        <h3><a href="/bar">GO TO THE BAR</a></h3>
+  </body>
+</html>
