@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ func main() {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/info", infoHandler)
 	http.HandleFunc("/bar", barHandler)
+	http.HandleFunc("/logout", logoutHandler)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
 	log.Println("server is running.")
@@ -49,6 +51,15 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		fUsername := req.FormValue("email")
 		fFirstName := req.FormValue("firstname")
 		fLastName := req.FormValue("lastname")
+
+		fieldsHaveData := strings.TrimSpace(fUsername) != "" && strings.TrimSpace(fFirstName) != "" && strings.TrimSpace(fLastName) != ""
+
+		if !fieldsHaveData {
+			// write response
+			w.Header().Set("content-type", "text/html")
+			tpl.ExecuteTemplate(w, "index.gohtml", nil)
+			return
+		}
 
 		newUser := user{
 			Email: fUsername, FirstName: fFirstName,
@@ -106,6 +117,12 @@ func barHandler(w http.ResponseWriter, req *http.Request) {
 	// write response
 	w.Header().Set("content-type", "text/html")
 	tpl.ExecuteTemplate(w, "bar.gohtml", u)
+}
+
+func logoutHandler(w http.ResponseWriter, req *http.Request) {
+	sessionCookie := getSessionCookie(req)
+	delete(sessionsDb, sessionCookie.Value)
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
 
 func getSessionCookie(req *http.Request) *http.Cookie {
