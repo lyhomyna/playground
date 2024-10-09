@@ -20,13 +20,15 @@ var usersDb = map[string]user{}
 var tpl *template.Template
 
 func init() {
-	tpl = template.Must(template.ParseFiles("templates/index.gohtml", "templates/bar.gohtml", "templates/info.gohtml"))
+	tpl = template.Must(template.ParseFiles("templates/index.gohtml", "templates/bar.gohtml", "templates/info.gohtml", "templates/404.gohtml"))
 }
+
+// if isAuthenticated - go to info page, else - go to sign-in page
 
 func main() {
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/info", infoHandler)
 	http.HandleFunc("/bar", barHandler)
+	http.HandleFunc("/sign-in", signinHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
@@ -35,19 +37,49 @@ func main() {
 }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
-	// write session id cookie
-	sessionIdCookie, _ := req.Cookie("session-id")
+	sessionIdCookie := getSessionCookie(req)
 	if sessionIdCookie == nil {
-		sessionId := uuid.New().String()
-		sessionIdCookie = &http.Cookie{
-			Name:  "session-id",
-			Value: sessionId,
+		log.Println("SessionIdCookie is nil. Redirect to /sign-in.")
+		http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
+	} else {
+		log.Println("SessionIdCookie is present.")
+		u := getUser(sessionIdCookie.Value)
+		if u == nil {
+			log.Println("User is nil.")
+			tpl.ExecuteTemplate(w, "404", nil)
+			return
 		}
-		http.SetCookie(w, sessionIdCookie)
+		handleUser(w, req)
+	}
+}
+
+func handleUser(w http.ResponseWriter, req *http.Request) {
+	sessionCookie := getSessionCookie(req)
+	if sessionCookie == nil {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
 	}
 
-	// submit button pressed
+	u := getUser(sessionCookie.Value)
+	if u == nil {
+		log.Printf("User not exist for session %s", sessionCookie.Value)
+		log.Println("Redirect to root")
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+	}
+
+	log.Println("User is present. Info page.")
+
+	w.Header().Set("content-type", "text/html")
+	tpl.ExecuteTemplate(w, "info.gohtml", u)
+}
+
+func signinHandler(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
+		log.Println("Register new user.")
+		sessionIdCookie := &http.Cookie{
+			Name:  "session-id",
+			Value: uuid.NewString(),
+		}
+
 		fUsername := req.FormValue("email")
 		fFirstName := req.FormValue("firstname")
 		fLastName := req.FormValue("lastname")
@@ -67,36 +99,14 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		usersDb[newUser.Email] = newUser
 		sessionsDb[sessionIdCookie.Value] = newUser.Email
-	}
 
-	// check if user exist
-	u := getUser(sessionIdCookie.Value)
-	if u != nil {
-		http.Redirect(w, req, "/info", http.StatusSeeOther)
-		return
-	}
-
-	// write response
-	w.Header().Set("content-type", "text/html")
-	tpl.ExecuteTemplate(w, "index.gohtml", nil)
-}
-
-func infoHandler(w http.ResponseWriter, req *http.Request) {
-	// get session id
-	sessionCookie := getSessionCookie(req)
-	if sessionCookie == nil {
+		http.SetCookie(w, sessionIdCookie)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
+	} else {
+		// write response
+		w.Header().Set("content-type", "text/html")
+		tpl.ExecuteTemplate(w, "index.gohtml", nil)
 	}
-
-	u := getUser(sessionCookie.Value)
-	if u == nil {
-		log.Printf("User not exist for session %s", sessionCookie.Value)
-		log.Println("Redirect to root")
-		http.Redirect(w, req, "/", http.StatusSeeOther)
-	}
-
-	w.Header().Set("content-type", "text/html")
-	tpl.ExecuteTemplate(w, "info.gohtml", u)
 }
 
 func barHandler(w http.ResponseWriter, req *http.Request) {
@@ -104,6 +114,7 @@ func barHandler(w http.ResponseWriter, req *http.Request) {
 	sessionCookie := getSessionCookie(req)
 	if sessionCookie == nil {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
 	}
 
 	// get user
@@ -121,6 +132,11 @@ func barHandler(w http.ResponseWriter, req *http.Request) {
 
 func logoutHandler(w http.ResponseWriter, req *http.Request) {
 	sessionCookie := getSessionCookie(req)
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session-id",
+		Value:  "",
+		MaxAge: -1,
+	})
 	delete(sessionsDb, sessionCookie.Value)
 	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
@@ -141,4 +157,12 @@ func getUser(sessionId string) *user {
 		return nil
 	}
 	return &u
+}
+
+func isAuthenicated(req *http.Request) bool {
+	_, err := req.Cookie("session-id")
+	if err != nil {
+		return false
+	}
+	return true
 }
