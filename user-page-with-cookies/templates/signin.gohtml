@@ -15,17 +15,22 @@
         flex-direction: column;
         align-items: center;
       }
-      .submit {
+      .btns {
         margin-top: 0.5rem;
+        display: flex;
+        flex-direction: row;
       }
+
     </style>
   </head>
   <body>
     <form method="POST">
       <input type="email" name="email" placeholder="email"/> <br>
-      <input type="text" name="firstname" placeholder="first name"/> <br>
-      <input type="text" name="lastname" placeholder="last name"/> <br>
-      <input class="submit" type="submit" value="Register"/>
+      <input type="text" name="password" placeholder="password"/> <br>
+      <div class="btns">
+        <input class="login" type="submit" value="Login" formaction="/log"/>
+        <input class="register" type="submit" value="Register" formaction="/reg"/>
+      </div>
     </form> 
   </body>
 </html>

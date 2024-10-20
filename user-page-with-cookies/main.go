@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -10,39 +11,44 @@ import (
 )
 
 type user struct {
-	Email     string
-	FirstName string
-	LastName  string
+	Email    string
+	Password string
 }
 
 var sessionsDb = map[string]string{}
 var usersDb = map[string]user{}
 var tpl *template.Template
+var sessionCookieName = "session-id"
 
 func init() {
-	tpl = template.Must(template.ParseFiles("templates/index.gohtml", "templates/bar.gohtml", "templates/info.gohtml", "templates/404.gohtml"))
+	tpl = template.Must(template.ParseFiles("templates/signin.gohtml", "templates/bar.gohtml", "templates/info.gohtml", "templates/404.gohtml"))
 }
-
-// if isAuthenticated - go to info page, else - go to sign-in page
 
 func main() {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/bar", barHandler)
 	http.HandleFunc("/sign-in", signinHandler)
 	http.HandleFunc("/logout", logoutHandler)
+
+	http.HandleFunc("/log", logHandler)
+	http.HandleFunc("/reg", regHandler)
+
+	http.HandleFunc("/logr", logger)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 
 	log.Println("server is running.")
 	http.ListenAndServe(":8080", nil)
 }
 
+func logger(w http.ResponseWriter, req *http.Request) {
+	log.Println(usersDb)
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+}
+
 func rootHandler(w http.ResponseWriter, req *http.Request) {
-	sessionIdCookie := getSessionCookie(req)
-	if sessionIdCookie == nil {
-		log.Println("SessionIdCookie is nil. Redirect to /sign-in.")
-		http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
-	} else {
-		log.Println("SessionIdCookie is present.")
+	if isAuthenicated(req) {
+		sessionIdCookie, _ := req.Cookie(sessionCookieName)
+
 		u := getUser(sessionIdCookie.Value)
 		if u == nil {
 			log.Println("User is nil.")
@@ -50,6 +56,9 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		handleUser(w, req)
+	} else {
+		log.Println("SessionIdCookie is nil. Redirect to /sign-in.")
+		http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
 	}
 }
 
@@ -73,40 +82,83 @@ func handleUser(w http.ResponseWriter, req *http.Request) {
 }
 
 func signinHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method == http.MethodPost {
-		log.Println("Register new user.")
-		sessionIdCookie := &http.Cookie{
-			Name:  "session-id",
-			Value: uuid.NewString(),
-		}
+	w.Header().Set("content-type", "text/html")
+	tpl.ExecuteTemplate(w, "signin.gohtml", nil)
+}
 
-		fUsername := req.FormValue("email")
-		fFirstName := req.FormValue("firstname")
-		fLastName := req.FormValue("lastname")
+func logHandler(w http.ResponseWriter, req *http.Request) {
+	log.Println("User login.")
+	if req.Method != http.MethodPost {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+	}
 
-		fieldsHaveData := strings.TrimSpace(fUsername) != "" && strings.TrimSpace(fFirstName) != "" && strings.TrimSpace(fLastName) != ""
+	fEmail := strings.TrimSpace(req.FormValue("email"))
+	fPassword := strings.TrimSpace(req.FormValue("password"))
 
-		if !fieldsHaveData {
-			// write response
-			w.Header().Set("content-type", "text/html")
-			tpl.ExecuteTemplate(w, "index.gohtml", nil)
+	// user existance and password correctneses
+	if user, ok := usersDb[fEmail]; ok {
+		if user.Password != fPassword {
+			log.Println(fmt.Sprintf("Password for %s is incorrect.", fEmail))
+			http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
 			return
 		}
-
-		newUser := user{
-			Email: fUsername, FirstName: fFirstName,
-			LastName: fLastName,
-		}
-		usersDb[newUser.Email] = newUser
-		sessionsDb[sessionIdCookie.Value] = newUser.Email
-
-		http.SetCookie(w, sessionIdCookie)
-		http.Redirect(w, req, "/", http.StatusSeeOther)
 	} else {
-		// write response
-		w.Header().Set("content-type", "text/html")
-		tpl.ExecuteTemplate(w, "index.gohtml", nil)
+		// user not exist
+		log.Println(fmt.Sprintf("User %s isn't exist.", fEmail))
+		http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
+		return
 	}
+
+	sessionCookie := &http.Cookie{
+		Name:  sessionCookieName,
+		Value: uuid.NewString(),
+	}
+
+	sessionsDb[sessionCookie.Value] = fEmail
+
+	http.SetCookie(w, sessionCookie)
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+}
+
+func regHandler(w http.ResponseWriter, req *http.Request) {
+	log.Println("User register.")
+	if req.Method != http.MethodPost {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+	}
+
+	fEmail := strings.TrimSpace(req.FormValue("email"))
+	fPassword := strings.TrimSpace(req.FormValue("password"))
+
+	fieldsHaveData := fEmail != "" && fPassword != ""
+	if !fieldsHaveData {
+		log.Println("Empty fields.")
+		w.Header().Set("content-type", "text/html")
+		tpl.ExecuteTemplate(w, "signin.gohtml", nil)
+		return
+	}
+
+	// is user exist in DB?
+	if _, ok := usersDb[fEmail]; ok {
+		log.Println(fmt.Sprintf("User %s already exist.", fEmail))
+		http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
+		return
+	}
+
+	sessionIdCookie := &http.Cookie{
+		Name:  sessionCookieName,
+		Value: uuid.NewString(),
+	}
+
+	newUser := user{
+		Email:    fEmail,
+		Password: fPassword,
+	}
+	usersDb[newUser.Email] = newUser
+	sessionsDb[sessionIdCookie.Value] = newUser.Email
+
+	log.Println("User has been signed in. Redirect to the root.")
+	http.SetCookie(w, sessionIdCookie)
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
 
 func barHandler(w http.ResponseWriter, req *http.Request) {
@@ -151,6 +203,8 @@ func getSessionCookie(req *http.Request) *http.Cookie {
 
 func getUser(sessionId string) *user {
 	var u user
+	log.Println(fmt.Sprintf("Trying to get user by sessionId: %s", sessionId))
+	log.Println(sessionsDb[sessionId])
 	if uid, ok := sessionsDb[sessionId]; ok {
 		u = usersDb[uid]
 	} else {
