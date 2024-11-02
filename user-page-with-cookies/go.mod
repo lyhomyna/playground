@@ -1,4 +1,4 @@
-module github.com/lyhomyna/cookies-table
+module cookiesplay
 
 go 1.22.5
 

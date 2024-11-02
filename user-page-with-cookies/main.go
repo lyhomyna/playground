@@ -9,15 +9,10 @@ import (
     "encoding/json"
     "github.com/google/uuid"
     "golang.org/x/crypto/bcrypt"
+    "cookiesplay/models"
 )
-	
-type user struct {
-	Email    string
-	Password string
-}
-
 var sessionsDb = map[string]string{}
-var usersDb = map[string]user{}
+var usersDb = map[string]models.User{}
 var tpl *template.Template
 var sessionCookieName = "session-id"
 var sessionLenInSec = 30
@@ -48,8 +43,8 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
     if isAuthenicated(req) {
 	sessionIdCookie, _ := req.Cookie(sessionCookieName)
 
-	u := getUser(sessionIdCookie.Value)
-	if u == nil {
+	usr := getUser(sessionIdCookie.Value)
+	if usr == nil {
 		log.Println("User is nil.")
 		tpl.ExecuteTemplate(w, "404", nil)
 		return
@@ -93,7 +88,7 @@ func logHandler(w http.ResponseWriter, req *http.Request) {
     fEmail := strings.TrimSpace(req.FormValue("email"))
     fPassword := strings.TrimSpace(req.FormValue("password"))
 
-    // user existance and password correctneses
+    // ser existance and password correctneses
     if user, ok := usersDb[fEmail]; ok {
 	passwordBytes := []byte(fPassword)
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), passwordBytes)
@@ -103,7 +98,7 @@ func logHandler(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
     } else {
-	// user not exist
+	// User not exist
 	log.Println(fmt.Sprintf("User %s isn't exist.", fEmail))
 	http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
 	return
@@ -133,7 +128,7 @@ func regHandler(w http.ResponseWriter, req *http.Request) {
 	return
     }
 
-    // is user exist in DB?
+    // is User exist in DB?
     if _, ok := usersDb[fEmail]; ok {
 	log.Println(fmt.Sprintf("User %s already exist.", fEmail))
 	http.Redirect(w, req, "/sign-in", http.StatusSeeOther)
@@ -148,7 +143,7 @@ func regHandler(w http.ResponseWriter, req *http.Request) {
     }
 
     sessionIdCookie := createSessionCookie() 
-    newUser := user{
+    newUser := models.User{
 	Email:    fEmail,
 	Password: string(pCost),
     }
@@ -168,7 +163,7 @@ func barHandler(w http.ResponseWriter, req *http.Request) {
 	return
     }
 
-    // get user
+    // get User
     u := getUser(sessionCookie.Value)
     if u == nil {
 	log.Printf("User not exist for session %s", sessionCookie.Value)
@@ -200,8 +195,8 @@ func getSessionCookie(req *http.Request) *http.Cookie {
     return sessionIdCookie
 }
 
-func getUser(sessionId string) *user {
-    var u user
+func getUser(sessionId string) *models.User {
+    var u models.User
     log.Println(fmt.Sprintf("Trying to get user by sessionId: %s", sessionId))
     log.Println(sessionsDb[sessionId])
     if uid, ok := sessionsDb[sessionId]; ok {
