@@ -36,7 +36,10 @@ func main() {
 
 
     log.Println("server is running.")
-    http.ListenAndServe(":8080", nil)
+    err := http.ListenAndServe(":8080", nil)
+    if err != nil {
+	fmt.Println(err)
+    }
 }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
@@ -187,14 +190,6 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
     http.Redirect(w, req, "/", http.StatusSeeOther)
 }
 
-func getSessionCookie(req *http.Request) *http.Cookie {
-    sessionIdCookie, _ := req.Cookie("session-id")
-    if sessionIdCookie == nil {
-	return nil // no session id
-    }
-    return sessionIdCookie
-}
-
 func getUser(sessionId string) *models.User {
     var u models.User
     log.Println(fmt.Sprintf("Trying to get user by sessionId: %s", sessionId))
@@ -214,6 +209,15 @@ func isAuthenicated(req *http.Request) bool {
     }
     return true
 }
+
+func getSessionCookie(req *http.Request) *http.Cookie {
+    sessionIdCookie, _ := req.Cookie("session-id")
+    if sessionIdCookie == nil {
+	return nil // no session id
+    }
+    return sessionIdCookie
+}
+
 
 func createSessionCookie() *http.Cookie {
     return &http.Cookie{
@@ -240,4 +244,3 @@ func showAllData(w http.ResponseWriter, req *http.Request) {
     w.WriteHeader(http.StatusOK)
     w.Write(res)
 }
-
