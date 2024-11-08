@@ -5,6 +5,9 @@
 	<meta charset="utf-8"/>
     </head>
     <body>
-	{{ . }}
+	<form method="POST" action="/file" enctype="multipart/form-data">
+	    <input type="file" name="file"/>
+	    <input type="submit" value="Save file"/>
+	</form>
     </body>
 </html>
