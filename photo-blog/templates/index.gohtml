@@ -3,11 +3,32 @@
     <head>
 	<title>Photo Blog</title>
 	<meta charset="utf-8"/>
+	<style>
+	    .pictures {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2rem;
+	    }
+
+	    .pictures img {
+		object-fit: contain;
+		width: 55rem;
+	    }
+	</style>
     </head>
     <body>
 	<form method="POST" action="/file" enctype="multipart/form-data">
 	    <input type="file" name="file"/>
 	    <input type="submit" value="Save file"/>
 	</form>
+	{{ if . }}
+	    <div class="pictures">
+		{{ range . }}
+		<img src="/public/{{ . }}">
+		{{ end }}
+	    </div>
+	{{ end }}
     </body>
 </html>

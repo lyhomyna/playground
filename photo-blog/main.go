@@ -26,6 +26,7 @@ func init() {
 func main() {
     http.HandleFunc("/", index)
     http.HandleFunc("/file", file)
+    http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("./public/user-files/"))))
 
     http.Handle("/favicon.ico", http.NotFoundHandler())
     
@@ -35,9 +36,17 @@ func main() {
 
 func index(w http.ResponseWriter, req *http.Request) {
     c := sessionCookie(w, req)
-    http.SetCookie(w, c)
-    tpl.ExecuteTemplate(w, "index.gohtml", c)
+    filenames := getFilenames(c.Value)
+    tpl.ExecuteTemplate(w, "index.gohtml", filenames)
 }
+
+func getFilenames(cookieValue string) []string {
+    filenames := strings.Split(cookieValue, "|")
+    if len(filenames) > 1 {
+	return filenames[1:]
+    }
+    return nil
+} 
 
 func file(w http.ResponseWriter, req *http.Request) { 
     if req.Method == http.MethodPost {
@@ -49,11 +58,15 @@ func file(w http.ResponseWriter, req *http.Request) {
 	defer clientFile.Close()
 
 	encryptedFilename := encryptFilename(fh.Filename) 
-	log.Printf("Encrypted to: '%s'", encryptedFilename)
+	log.Printf("Filename encrypted to: '%s'", encryptedFilename)
+
 	saveFile(clientFile, encryptedFilename)
 
 	sessionCookie := sessionCookie(w, req)
-	appendCookieValue(w, sessionCookie, encryptedFilename)
+	updatedCookie := appendToCookieValue(sessionCookie, encryptedFilename)
+	log.Printf("Updated session cookie: %+v", updatedCookie)
+
+	http.SetCookie(w, updatedCookie)
 	http.Redirect(w, req, "/", http.StatusSeeOther)
     }
 }
@@ -77,22 +90,27 @@ func saveFile(clientFile multipart.File, filename string) {
     folder := filepath.Join(".", "public", "user-files")
     err := os.MkdirAll(folder, os.ModePerm)
     if err != nil {
-	log.Fatal(err)
+	log.Fatalf("Can't create folder. %s", err)
     }
 
     serverFilePath := filepath.Join(".", "public", "user-files", filename)
     serverFile, err := os.Create(serverFilePath)
     if err != nil {
-	log.Fatal(err)
+	log.Fatalf("Can't create file. %s", err)
     }
     defer serverFile.Close()
 
-    io.Copy(serverFile, clientFile)
+    
+    if _, err = io.Copy(serverFile, clientFile); err != nil {
+	log.Printf("Can't copy file. %s", err)
+    }
+    log.Println("File has been saved successfully.")
 }
 
 func sessionCookie(w http.ResponseWriter,req *http.Request) *http.Cookie {
     c, err := req.Cookie(sessionCookieName)
     if err != nil {
+	log.Println("Session cookie is missing. Create.")
 	c = &http.Cookie {
 	    Name: sessionCookieName,
 	    Value: uuid.New().String(),
@@ -100,14 +118,14 @@ func sessionCookie(w http.ResponseWriter,req *http.Request) *http.Cookie {
 
 	http.SetCookie(w, c)
     } 
-
     return c
 }
 
-func appendCookieValue(w http.ResponseWriter, c *http.Cookie, v string) {
-    if !strings.Contains(c.Value, v) {
-	c.Value += "|" + v 
-	http.SetCookie(w, c)
+func appendToCookieValue(c *http.Cookie, cookiePart string) *http.Cookie {
+    if !strings.Contains(c.Value, cookiePart) {
+	log.Printf("Cookie part '%s' is missing. Append.", cookiePart)
+	c.Value += "|" + cookiePart 
     }
+    return c
 }
 
