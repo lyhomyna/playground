@@ -56,7 +56,9 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 
 	var username string
 	if err := decoder.Decode(&username); err != nil {
-	    log.Fatalf("Username decode failure. %s", err)
+	    log.Printf("Username decode failure. %s", err)
+	    w.WriteHeader(http.StatusForbidden)
+	    return
 	}
 
 	if _, ok := users[username]; ok {
