@@ -1,0 +1,52 @@
+form {
+    width: 10rem;
+    display:flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+form div {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+#role {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+#role-label {
+    flex:1;
+}
+#role-list {
+    flex:2;
+}
+.username {
+    padding-right: 25px;
+    background: url('/public/images/person-card.png') no-repeat right;
+    background-size: 20px;
+}
+.password {
+    padding-right: 25px;
+    background: url('/public/images/password.png') no-repeat right;
+    background-size: 20px;
+}
+.password-repeat {
+    padding-right: 25px;
+    background: url('/public/images/password-repeat.png') no-repeat right;
+    background-size: 20px;
+}
+
+.username-err {
+    margin: 0;
+    visibility: collapse;
+}
+
+.password-err {
+    margin: 0;
+    visibility: collapse;
+}
+
+#submit-btn {
+    margin-top: 10px;
+
+}
