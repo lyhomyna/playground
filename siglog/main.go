@@ -26,7 +26,19 @@ var users = map[string]models.User{
 }
 
 func init() {
-    tpl = template.Must(template.ParseGlob("templates/*.html"))
+    tpl = template.New("")
+    tpl, err := tpl.ParseGlob("templates/*.html")
+    if err != nil {
+	log.Fatalf("Can't parse main page files. %s", err)
+    }
+    tpl, err = tpl.ParseGlob("templates/login/*.html")
+    if err != nil {
+	log.Fatalf("Can't parse login page files. %s", err)
+    }
+    tpl, err = tpl.ParseGlob("templates/register/*.html")
+    if err != nil {
+	log.Fatalf("Can't parse register page files. %s", err)
+    }
 }
 
 // for debugging
@@ -40,6 +52,8 @@ func db(w http.ResponseWriter, req *http.Request) {
 
 func main() {
     http.HandleFunc("/", index)
+    http.HandleFunc("/login", login)
+    http.HandleFunc("/register", register)
 
     http.HandleFunc("/users", usersHandler)
     http.HandleFunc("/db", db)
@@ -55,19 +69,43 @@ func main() {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
+    if sessionCookie, ok := isAuthenticated(req); ok {
+	userId := sessions[sessionCookie.Value]
+	tpl.ExecuteTemplate(w, "home.html", users[userId]) 
+    } else {
+	tpl.ExecuteTemplate(w, "index.html", nil)
+    }
+}
+
+func isAuthenticated(req *http.Request) (*http.Cookie, bool) {
     sessionCookie, err := req.Cookie(sessionCookieName)
     if err != nil {
 	log.Println("Session cookies not found.")
-	tpl.ExecuteTemplate(w, "sign-in.html", nil)
+	return nil, false
+    }
+    return sessionCookie, true
+}
+
+func login(w http.ResponseWriter, req *http.Request) {
+    if _, ok := isAuthenticated(req); ok {
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 	return
     }
-    userId := sessions[sessionCookie.Value]
-    log.Println(users[userId])
-    tpl.ExecuteTemplate(w, "index.html", users[userId])
+
+    tpl.ExecuteTemplate(w, "login.html", nil)
+}
+
+func register(w http.ResponseWriter, req *http.Request) {
+    if _, ok := isAuthenticated(req); ok {
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+	return
+    }
+
+    tpl.ExecuteTemplate(w, "register.html", nil)
 }
 
 func usersHandler(w http.ResponseWriter, req *http.Request) {
-    if req.Method == http.MethodGet {
+    if req.Method == http.MethodGet { // check if username exist
 	username := req.URL.Query().Get("id")
 	if username == "" {
 	    log.Println("Username is empty string.")
@@ -82,7 +120,7 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("'%s' not found. Status 404.", username)
 	w.WriteHeader(http.StatusNotFound)
-    } else if (req.Method == http.MethodPost) {
+    } else if (req.Method == http.MethodPost) { // add new user
 	decoder := json.NewDecoder(req.Body)
 
 	var newUser models.User

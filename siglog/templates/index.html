@@ -3,11 +3,21 @@
   <head>
     <meta charset="utf-8"/>
     <title>hands-on</title>
+    <style>
+	.logreg {
+	    height: 100vh;
+	    display: flex;
+	    flex-direction: row;
+	    align-items: center;
+	    justify-content: center;
+	    gap: 1rem;
+	}
+    </style>
   </head>
   <body>
-      <p>Hello, {{ .Firstname }} {{ .Lastname }}!</p>
-      <p>Your username is: {{ .Username }}</p>
-      <p>Your passsword looks like this: {{ .Password }}</p>
-      <p>Your role is: {{ .Role }}</p>
+      <div class="logreg">
+	  <a href="/login">Login</a>
+	  <a href="/register">Register</a>
+      </div>
   </body>
 </html>

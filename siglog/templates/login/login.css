@@ -1,0 +1,27 @@
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+form {
+    width: 10rem;
+    display:flex;
+    flex-direction: column;
+}
+
+#username {
+    padding-right: 25px;
+    background: url('/public/images/person-card.png') no-repeat right;
+    background-size: 20px;
+}
+#password {
+    padding-right: 25px;
+    background: url('/public/images/password.png') no-repeat right;
+    background-size: 20px;
+}
+#submit-btn {
+    margin-top: 10px;
+}
