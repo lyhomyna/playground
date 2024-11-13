@@ -1,14 +1,13 @@
-const usernameErr = document.querySelector(".username-err");
-const passwordErr = document.querySelector(".password-err");
+const usernameErr = document.querySelector("#username-err");
+const passwordErr = document.querySelector("#password-err");
 const submitBtn = document.querySelector("#submit-btn")
 
-const username = document.querySelector(".username");
+const username = document.querySelector("#username");
 username.addEventListener("input", async (_) => {
     const opt = {
-	method: "post",
-	body: JSON.stringify(username.value),
+	method: "get",
     };
-    const response = await fetch("/users", opt);
+    const response = await fetch(`/users?id=${username.value.trim()}`, opt);
     switch (response.status) {
 	// statusOK - user with username found
 	case 200:
@@ -22,8 +21,8 @@ username.addEventListener("input", async (_) => {
     enableButton()
 })
 
-const password = document.querySelector(".password")
-const passwordRepeat = document.querySelector(".password-repeat")
+const password = document.querySelector("#password")
+const passwordRepeat = document.querySelector("#password-repeat")
 
 password.addEventListener("change", (_) => {
     if (passwordRepeat.value.trim() === "" && password.value.trim() === "") {
@@ -68,3 +67,27 @@ function enableButton() {
     }
 }
 
+const role = document.querySelector("#role-list")
+submitBtn.addEventListener("click", async (event) => {
+    event.preventDefault();
+    const respDataObj = {
+	"username": username.value.trim(),
+	"password": password.value.trim(),
+	"firstname": firstname.value.trim(),
+	"lastname": lastname.value.trim(),
+	"role": role.value,
+    };
+
+    const respDataJson = JSON.stringify(respDataObj);
+    console.log(respDataJson);
+
+    const opt = {
+	method: "post",
+	body: respDataJson,
+	headers: {
+	    "content-type": "application/json",
+	},
+    };
+    await fetch("/users", opt);
+    location.reload();
+})

@@ -20,28 +20,28 @@ form div {
 #role-list {
     flex:2;
 }
-.username {
+#username {
     padding-right: 25px;
     background: url('/public/images/person-card.png') no-repeat right;
     background-size: 20px;
 }
-.password {
+#password {
     padding-right: 25px;
     background: url('/public/images/password.png') no-repeat right;
     background-size: 20px;
 }
-.password-repeat {
+#password-repeat {
     padding-right: 25px;
     background: url('/public/images/password-repeat.png') no-repeat right;
     background-size: 20px;
 }
 
-.username-err {
+#username-err {
     margin: 0;
     visibility: collapse;
 }
 
-.password-err {
+#password-err {
     margin: 0;
     visibility: collapse;
 }
