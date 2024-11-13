@@ -27,15 +27,15 @@ var users = map[string]models.User{
 
 func init() {
     tpl = template.New("")
-    tpl, err := tpl.ParseGlob("templates/*.html")
+    tpl, err := tpl.ParseGlob("resources/*.html")
     if err != nil {
 	log.Fatalf("Can't parse main page files. %s", err)
     }
-    tpl, err = tpl.ParseGlob("templates/login/*.html")
+    tpl, err = tpl.ParseGlob("resources/login/*.html")
     if err != nil {
 	log.Fatalf("Can't parse login page files. %s", err)
     }
-    tpl, err = tpl.ParseGlob("templates/register/*.html")
+    tpl, err = tpl.ParseGlob("resources/register/*.html")
     if err != nil {
 	log.Fatalf("Can't parse register page files. %s", err)
     }
@@ -58,7 +58,7 @@ func main() {
     http.HandleFunc("/users", usersHandler)
     http.HandleFunc("/db", db)
 
-    fileServer := http.FileServer(http.Dir("./templates"))
+    fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
 
     http.Handle("/favicon.ico", http.NotFoundHandler())
