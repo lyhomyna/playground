@@ -87,12 +87,50 @@ func isAuthenticated(req *http.Request) (*http.Cookie, bool) {
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
-    if _, ok := isAuthenticated(req); ok {
-	http.Redirect(w, req, "/", http.StatusSeeOther)
-	return
-    }
+    if req.Method == http.MethodGet {
+	if _, ok := isAuthenticated(req); ok {
+	    http.Redirect(w, req, "/", http.StatusSeeOther)
+	    return
+	}
+	tpl.ExecuteTemplate(w, "login.html", nil)
+    } else if req.Method == http.MethodPost {
+	var usernamePassword struct{
+	    Username string `json:"username"`
+	    Password string `json:"password"`
+	}
 
-    tpl.ExecuteTemplate(w, "login.html", nil)
+	if err := json.NewDecoder(req.Body).Decode(&usernamePassword); err != nil {
+	    log.Printf("Decode login data failure. %s", err)
+	    w.WriteHeader(http.StatusForbidden)
+	    return
+	}
+
+	// user validation
+	if user, ok := users[usernamePassword.Username]; ok {
+	    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(usernamePassword.Password)); err != nil {
+		log.Printf("Incorrect password for user '%s'", user.Username)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	    }
+	} else {
+	    log.Println("Incorrect username.")
+	    w.WriteHeader(http.StatusUnauthorized)
+	}
+	
+	log.Printf("Login: user '%s' found. Create session.", usernamePassword.Username)
+
+	// create session
+	sessionId := uuid.NewString()
+	sessions[sessionId] = usernamePassword.Username
+
+	http.SetCookie(w, &http.Cookie {
+	    Name: sessionCookieName,
+	    Value: sessionId,
+	})
+
+	log.Printf("Login: user '%s' logined.", usernamePassword.Username)
+	w.WriteHeader(http.StatusOK)
+    }
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
@@ -132,7 +170,7 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 
 	encryptedPassword := encryptPassword(newUser.Password)
 	if encryptedPassword == "" {
-	    w.WriteHeader(http.StatusForbidden)
+	    w.WriteHeader(http.StatusInternalServerError)
 	    return
 	}
 	newUser.Password = encryptedPassword
@@ -150,8 +188,7 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 	    Value: sessionId,
 	})
 
-	log.Println("Redirect to /.")
-	http.Redirect(w, req, "/", http.StatusSeeOther)
+	w.WriteHeader(http.StatusCreated)
     }
 }
 

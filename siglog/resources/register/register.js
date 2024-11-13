@@ -88,6 +88,12 @@ submitBtn.addEventListener("click", async (event) => {
 	    "content-type": "application/json",
 	},
     };
-    await fetch("/users", opt);
-    location.reload();
+    const response = await fetch("/users", opt);
+    if (response.status === 201) {
+	location.reload();
+    } else if (response.status == 403){
+	console.log("User data hasn't provided.")
+    } else {
+	console.log("wtf")
+    }
 })
