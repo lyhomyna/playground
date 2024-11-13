@@ -48,7 +48,12 @@ passwordRepeat.addEventListener("change", (_) => {
 
 const firstname = document.querySelector("#firstname")
 const lastname = document.querySelector("#lastname")
+
+firstname.addEventListener("change", (_) => enableButton())
+lastname.addEventListener("change", (_) => enableButton())
+
 function enableButton() {
+    console.log("enable button")
     if (usernameErr.style.visibility !== "visible" 
 	&& passwordErr.style.visibility !== "visible"
 	&& username.value.trim() !== ""
@@ -62,3 +67,4 @@ function enableButton() {
         submitBtn.disabled = true;
     }
 }
+
