@@ -88,7 +88,7 @@ submitBtn.addEventListener("click", async (event) => {
 	    "content-type": "application/json",
 	},
     };
-    const response = await fetch("/users", opt);
+    const response = await fetch("/register", opt);
     if (response.status === 201) {
 	location.reload();
     } else if (response.status == 403){

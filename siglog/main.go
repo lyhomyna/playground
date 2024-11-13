@@ -134,31 +134,13 @@ func login(w http.ResponseWriter, req *http.Request) {
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
-    if _, ok := isAuthenticated(req); ok {
-	http.Redirect(w, req, "/", http.StatusSeeOther)
-	return
-    }
-
-    tpl.ExecuteTemplate(w, "register.html", nil)
-}
-
-func usersHandler(w http.ResponseWriter, req *http.Request) {
-    if req.Method == http.MethodGet { // check if username exist
-	username := req.URL.Query().Get("id")
-	if username == "" {
-	    log.Println("Username is empty string.")
-	    w.WriteHeader(http.StatusForbidden)
+    if req.Method == http.MethodGet {
+	if _, ok := isAuthenticated(req); ok {
+	    http.Redirect(w, req, "/", http.StatusSeeOther)
 	    return
 	}
-
-	if _, ok := users[username]; ok {
-	    log.Printf("'%s' found. Status 200.", username)
-	    w.WriteHeader(http.StatusOK)
-	    return
-	}
-	log.Printf("'%s' not found. Status 404.", username)
-	w.WriteHeader(http.StatusNotFound)
-    } else if (req.Method == http.MethodPost) { // add new user
+	tpl.ExecuteTemplate(w, "register.html", nil)
+    } else if req.Method == http.MethodPost {
 	decoder := json.NewDecoder(req.Body)
 
 	var newUser models.User
@@ -190,6 +172,25 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
     }
+}
+
+func usersHandler(w http.ResponseWriter, req *http.Request) {
+    if req.Method == http.MethodGet { // check if username exist
+	username := req.URL.Query().Get("id")
+	if username == "" {
+	    log.Println("Username is empty string.")
+	    w.WriteHeader(http.StatusForbidden)
+	    return
+	}
+
+	if _, ok := users[username]; ok {
+	    log.Printf("'%s' found. Status 200.", username)
+	    w.WriteHeader(http.StatusOK)
+	    return
+	}
+	log.Printf("'%s' not found. Status 404.", username)
+	w.WriteHeader(http.StatusNotFound)
+    } 
 }
 
 func encryptPassword(password string) (string) {
