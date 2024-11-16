@@ -54,6 +54,7 @@ func main() {
     http.HandleFunc("/", index)
     http.HandleFunc("/login", login)
     http.HandleFunc("/register", register)
+    http.HandleFunc("/logout", logout)
 
     http.HandleFunc("/users", usersHandler)
     http.HandleFunc("/db", db)
@@ -174,8 +175,21 @@ func register(w http.ResponseWriter, req *http.Request) {
     }
 }
 
+func logout(w http.ResponseWriter, req *http.Request) {
+    if _, ok := isAuthenticated(req); ok {
+	http.SetCookie(w, &http.Cookie {
+	    Name: sessionCookieName,
+	    MaxAge: -1,
+	})	
+
+	delete(sessions, sessionCookieName)
+
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+    }
+}
+
 func usersHandler(w http.ResponseWriter, req *http.Request) {
-    if req.Method == http.MethodGet { // check if username exist
+    if req.Method == http.MethodGet { // check if username exists
 	username := req.URL.Query().Get("id")
 	if username == "" {
 	    log.Println("Username is empty string.")
@@ -201,4 +215,3 @@ func encryptPassword(password string) (string) {
     }
     return string(bytes)
 }
-
