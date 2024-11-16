@@ -7,25 +7,19 @@ import (
 	"net/http"
 
 	"qqweq/siglog/models"
+	"qqweq/siglog/controllers"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var tpl *template.Template
+var userController *controllers.UserController
 var sessionCookieName = "sessionId"
 var sessions = map[string]string {}
-var users = map[string]models.User{
-    "jamesbond": {
-	Username: "jamesbond",
-	Password: "hashedpassword",
-	Firstname: "James",
-	Lastname: "Bond",
-	Role: "user",
-    },
-}
 
 func init() {
+    userController = controllers.NewUserController()
+
     tpl = template.New("")
     tpl, err := tpl.ParseGlob("resources/*.html")
     if err != nil {
@@ -41,15 +35,6 @@ func init() {
     }
 }
 
-// for debugging
-func db(w http.ResponseWriter, req *http.Request) {
-    d := map[string]any {
-	"sessions": sessions,
-	"users": users,
-    }
-    json.NewEncoder(w).Encode(d)
-}
-
 func main() {
     http.HandleFunc("/", index)
     http.HandleFunc("/login", login)
@@ -57,7 +42,6 @@ func main() {
     http.HandleFunc("/logout", logout)
 
     http.HandleFunc("/users", usersHandler)
-    http.HandleFunc("/db", db)
 
     fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
@@ -71,8 +55,8 @@ func main() {
 
 func index(w http.ResponseWriter, req *http.Request) {
     if sessionCookie, ok := isAuthenticated(req); ok {
-	userId := sessions[sessionCookie.Value]
-	tpl.ExecuteTemplate(w, "home.html", users[userId]) 
+	username := sessions[sessionCookie.Value]
+	tpl.ExecuteTemplate(w, "home.html", userController.GetUserByUsername(username)) 
     } else {
 	tpl.ExecuteTemplate(w, "index.html", nil)
     }
@@ -107,9 +91,9 @@ func login(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// user validation
-	if user, ok := users[usernamePassword.Username]; ok {
-	    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(usernamePassword.Password)); err != nil {
-		log.Printf("Incorrect password for user '%s'", user.Username)
+	if user := userController.GetUserByUsername(usernamePassword.Username); user != nil {
+	    if err := userController.ComparePasswords(user, usernamePassword.Password); err != nil {
+		log.Printf("User '%s'. %s", user.Username, err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	    }
@@ -151,14 +135,9 @@ func register(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
 
-	encryptedPassword := encryptPassword(newUser.Password)
-	if encryptedPassword == "" {
-	    w.WriteHeader(http.StatusInternalServerError)
-	    return
+	if err := userController.AddUser(&newUser); err != nil {
+	    log.Println(err)
 	}
-	newUser.Password = encryptedPassword
-
-	users[newUser.Username] = newUser
 	log.Printf("New user '%s' has been added.", newUser.Username)
 
 	sessionId := uuid.NewString() 
@@ -197,7 +176,7 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
 
-	if _, ok := users[username]; ok {
+	if user := userController.GetUserByUsername(username); user != nil {
 	    log.Printf("'%s' found. Status 200.", username)
 	    w.WriteHeader(http.StatusOK)
 	    return
@@ -207,11 +186,3 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
     } 
 }
 
-func encryptPassword(password string) (string) {
-    bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    if err != nil {
-	log.Printf("Cant encrypt password. %s", err)
-	return ""
-    }
-    return string(bytes)
-}
