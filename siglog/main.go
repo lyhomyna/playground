@@ -65,15 +65,6 @@ func index(w http.ResponseWriter, req *http.Request) {
     }
 }
 
-func isAuthenticated(req *http.Request) (*http.Cookie, bool) {
-    sessionCookie, err := req.Cookie(sessionCookieName)
-    if err != nil {
-	log.Println("Session cookies not found.")
-	return nil, false
-    }
-    return sessionCookie, true
-}
-
 func login(w http.ResponseWriter, req *http.Request) {
     if req.Method == http.MethodGet {
 	if _, ok := isAuthenticated(req); ok {
@@ -82,13 +73,10 @@ func login(w http.ResponseWriter, req *http.Request) {
 	}
 	tpl.ExecuteTemplate(w, "login.html", nil)
     } else if req.Method == http.MethodPost {
-	var usernamePassword struct{
-	    Username string `json:"username"`
-	    Password string `json:"password"`
-	}
 
-	if err := json.NewDecoder(req.Body).Decode(&usernamePassword); err != nil {
-	    log.Printf("Decode login data failure. %s", err)
+	var usernamePassword models.UserLog
+	if err := decodeFromTo(req.Body, &usernamePassword); err != nil {
+	    log.Printf("Login. %s", err)
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
@@ -108,13 +96,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Login: user '%s' found. Create session.", usernamePassword.Username)
 
 	// create session
-	sessionId := uuid.NewString()
-	sessions[sessionId] = usernamePassword.Username
-
-	http.SetCookie(w, &http.Cookie {
-	    Name: sessionCookieName,
-	    Value: sessionId,
-	})
+	createSession(usernamePassword.Username, w)
 
 	log.Printf("Login: user '%s' logined.", usernamePassword.Username)
 	w.WriteHeader(http.StatusOK)
@@ -131,7 +113,8 @@ func register(w http.ResponseWriter, req *http.Request) {
     } else if req.Method == http.MethodPost {
 	// decode
 	var newUser models.User
-	if err := decodeUser(&newUser, req.Body); err != nil {
+	if err := decodeFromTo(req.Body, &newUser); err != nil {
+	    log.Printf("Register. %e", err)
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
@@ -181,7 +164,16 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
     } 
 }
 
-func decodeUser(target *models.User, rc io.ReadCloser) error {
+func isAuthenticated(req *http.Request) (*http.Cookie, bool) {
+    sessionCookie, err := req.Cookie(sessionCookieName)
+    if err != nil {
+	log.Println("Session cookies not found.")
+	return nil, false
+    }
+    return sessionCookie, true
+}
+
+func decodeFromTo(rc io.ReadCloser, target any) error {
     decoder := json.NewDecoder(rc)
     if err := decoder.Decode(target); err != nil {
 	return errors.New(fmt.Sprintf("Decode failure. %s", err))
