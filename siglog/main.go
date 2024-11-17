@@ -2,12 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 
-	"qqweq/siglog/models"
 	"qqweq/siglog/controllers"
+	"qqweq/siglog/models"
 
 	"github.com/google/uuid"
 )
@@ -126,29 +129,21 @@ func register(w http.ResponseWriter, req *http.Request) {
 	}
 	tpl.ExecuteTemplate(w, "register.html", nil)
     } else if req.Method == http.MethodPost {
-	decoder := json.NewDecoder(req.Body)
-
+	// decode
 	var newUser models.User
-	if err := decoder.Decode(&newUser); err != nil {
-	    log.Printf("Can't decode new user. %s", err)
+	if err := decodeUser(&newUser, req.Body); err != nil {
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
 
+	// add
 	if err := userController.AddUser(&newUser); err != nil {
 	    log.Println(err)
+	    return
 	}
 	log.Printf("New user '%s' has been added.", newUser.Username)
 
-	sessionId := uuid.NewString() 
-
-	sessions[sessionId] = newUser.Username
-	log.Println("New session has been created.")
-
-	http.SetCookie(w, &http.Cookie {
-	    Name: sessionCookieName,
-	    Value: sessionId,
-	})
+	createSession(newUser.Username, w)
 
 	w.WriteHeader(http.StatusCreated)
     }
@@ -186,3 +181,22 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
     } 
 }
 
+func decodeUser(target *models.User, rc io.ReadCloser) error {
+    decoder := json.NewDecoder(rc)
+    if err := decoder.Decode(target); err != nil {
+	return errors.New(fmt.Sprintf("Decode failure. %s", err))
+    }
+    return nil
+}
+
+func createSession(username string, w http.ResponseWriter) {
+    sessionId := uuid.NewString() 
+
+    sessions[sessionId] = username 
+    log.Println("New session has been created.")
+
+    http.SetCookie(w, &http.Cookie {
+	Name: sessionCookieName,
+	Value: sessionId,
+    })
+}
