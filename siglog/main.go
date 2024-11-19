@@ -38,16 +38,18 @@ func init() {
 
 func main() {
     http.HandleFunc("/", index)
+    // return a HTML page 
     http.HandleFunc("/login", login)
     http.HandleFunc("/register", register)
     http.HandleFunc("/logout", logout)
 
+    // doesn't return a HTML page
     http.HandleFunc("/users", usersHandler)
 
     fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
-
     http.Handle("/favicon.ico", http.NotFoundHandler())
+
     log.Println("Server is listening on port 10443.")
     if err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil); err != nil {
       log.Println(err)
@@ -151,11 +153,11 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if user := userController.GetUserByUsername(username); user != nil {
-	    // USERNAME ALREADY TAKEN
+	    // username not found
 	    w.WriteHeader(http.StatusOK)
 	    return
 	}
-	// USERNAME isn't taken
+	// usename found
 	w.WriteHeader(http.StatusNotFound)
     } 
 }
