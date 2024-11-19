@@ -11,17 +11,15 @@ import (
 
 	"qqweq/siglog/controllers"
 	"qqweq/siglog/models"
-
-	"github.com/google/uuid"
 )
 
 var tpl *template.Template
 var userController *controllers.UserController
-var sessionCookieName = "sessionId"
-var sessions = map[string]string {}
+var sessionController *controllers.SessionController
 
 func init() {
     userController = controllers.NewUserController()
+    sessionController = controllers.NewSessionController()
 
     tpl = template.New("")
     tpl, err := tpl.ParseGlob("resources/*.html")
@@ -57,8 +55,8 @@ func main() {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-    if sessionCookie, ok := isAuthenticated(req); ok {
-	username := sessions[sessionCookie.Value]
+    if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
+	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
 	tpl.ExecuteTemplate(w, "home.html", userController.GetUserByUsername(username)) 
     } else {
 	tpl.ExecuteTemplate(w, "index.html", nil)
@@ -67,8 +65,8 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 func login(w http.ResponseWriter, req *http.Request) {
     if req.Method == http.MethodGet {
-	if _, ok := isAuthenticated(req); ok {
-	    http.Redirect(w, req, "/", http.StatusSeeOther)
+	if _, ok := sessionController.IsAuthenticated(req); ok {
+	    http.Redirect(w, req, "/", http.StatusSeeOther) // if you authenticated - login page isn't for you
 	    return
 	}
 	tpl.ExecuteTemplate(w, "login.html", nil)
@@ -76,101 +74,90 @@ func login(w http.ResponseWriter, req *http.Request) {
 
 	var usernamePassword models.UserLog
 	if err := decodeFromTo(req.Body, &usernamePassword); err != nil {
-	    log.Printf("Login. %s", err)
+	    log.Printf("Login. %s", err) // bro, your data is trash, even decoder can't decode it
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
 
-	// user validation
+	// user validation (looks like spagetti)
 	if user := userController.GetUserByUsername(usernamePassword.Username); user != nil {
-	    if err := userController.ComparePasswords(user, usernamePassword.Password); err != nil {
-		log.Printf("User '%s'. %s", user.Username, err)
+	    incorrectPasswordErr := userController.ComparePasswords(user, usernamePassword.Password)
+	    if incorrectPasswordErr != nil {
+		log.Printf("User '%s'. %s", user.Username, incorrectPasswordErr) 
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	    }
 	} else {
-	    log.Println("Incorrect username.")
+	    log.Println("Incorrect username.") // you're fal'shivka
 	    w.WriteHeader(http.StatusUnauthorized)
 	}
-	
-	log.Printf("Login: user '%s' found. Create session.", usernamePassword.Username)
 
-	// create session
-	createSession(usernamePassword.Username, w)
+	sessionController.CreateSession(usernamePassword.Username, w)
 
-	log.Printf("Login: user '%s' logined.", usernamePassword.Username)
+	log.Printf("User '%s' logined.", usernamePassword.Username)
 	w.WriteHeader(http.StatusOK)
     }
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
     if req.Method == http.MethodGet {
-	if _, ok := isAuthenticated(req); ok {
+	if _, ok := sessionController.IsAuthenticated(req); ok {
 	    http.Redirect(w, req, "/", http.StatusSeeOther)
 	    return
 	}
 	tpl.ExecuteTemplate(w, "register.html", nil)
     } else if req.Method == http.MethodPost {
-	// decode
+
 	var newUser models.User
 	if err := decodeFromTo(req.Body, &newUser); err != nil {
-	    log.Printf("Register. %e", err)
+	    log.Printf("Register. %e", err) // data is trash again. decoder is shocked
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
 
-	// add
+	// add decoded user to "database" (haha)
 	if err := userController.AddUser(&newUser); err != nil {
 	    log.Println(err)
 	    return
 	}
 	log.Printf("New user '%s' has been added.", newUser.Username)
 
-	createSession(newUser.Username, w)
+	sessionController.CreateSession(newUser.Username, w)
 
 	w.WriteHeader(http.StatusCreated)
     }
 }
 
 func logout(w http.ResponseWriter, req *http.Request) {
-    if _, ok := isAuthenticated(req); ok {
-	http.SetCookie(w, &http.Cookie {
-	    Name: sessionCookieName,
-	    MaxAge: -1,
-	})	
+    if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
+	// it's stupid, but I want log
+	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
 
-	delete(sessions, sessionCookieName)
-
+	sessionController.DeleteSession(w)
+	
+	log.Printf("User '%s' logged out.", username)
+	// from this moment, I don't know who you are
 	http.Redirect(w, req, "/", http.StatusSeeOther)
     }
 }
 
 func usersHandler(w http.ResponseWriter, req *http.Request) {
-    if req.Method == http.MethodGet { // check if username exists
+    if req.Method == http.MethodGet { // username existence fact or with another words - "USERNAME ALREADY TAKEN" 
 	username := req.URL.Query().Get("id")
 	if username == "" {
-	    log.Println("Username is empty string.")
+	    log.Println("Can't get username from URL query.")
 	    w.WriteHeader(http.StatusForbidden)
 	    return
 	}
 
 	if user := userController.GetUserByUsername(username); user != nil {
-	    log.Printf("'%s' found. Status 200.", username)
+	    // USERNAME ALREADY TAKEN
 	    w.WriteHeader(http.StatusOK)
 	    return
 	}
-	log.Printf("'%s' not found. Status 404.", username)
+	// USERNAME isn't taken
 	w.WriteHeader(http.StatusNotFound)
     } 
-}
-
-func isAuthenticated(req *http.Request) (*http.Cookie, bool) {
-    sessionCookie, err := req.Cookie(sessionCookieName)
-    if err != nil {
-	log.Println("Session cookies not found.")
-	return nil, false
-    }
-    return sessionCookie, true
 }
 
 func decodeFromTo(rc io.ReadCloser, target any) error {
@@ -179,16 +166,4 @@ func decodeFromTo(rc io.ReadCloser, target any) error {
 	return errors.New(fmt.Sprintf("Decode failure. %s", err))
     }
     return nil
-}
-
-func createSession(username string, w http.ResponseWriter) {
-    sessionId := uuid.NewString() 
-
-    sessions[sessionId] = username 
-    log.Println("New session has been created.")
-
-    http.SetCookie(w, &http.Cookie {
-	Name: sessionCookieName,
-	Value: sessionId,
-    })
 }
