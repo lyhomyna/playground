@@ -50,8 +50,8 @@ func main() {
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
     http.Handle("/favicon.ico", http.NotFoundHandler())
 
-    log.Println("Server is listening on port 10443.")
-    if err := http.ListenAndServeTLS(":10443", "cert.pem", "key.pem", nil); err != nil {
+    log.Println("Server is listening on port 443.")
+    if err := http.ListenAndServeTLS(":443", "cert.pem", "key.pem", nil); err != nil {
       log.Println(err)
     }
 }
