@@ -1,0 +1,6 @@
+db:
+  user: "root"
+  password: "**v7if**"
+  host: localhost
+  name: "go_db"
+  port: 3306
