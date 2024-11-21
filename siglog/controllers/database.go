@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -52,9 +53,16 @@ func connectToDb() error {
 
 // TODO: refactor
 func getEnv() *models.EnvModel {
-    f, err := os.Open("./variables.env")
+    wd, err := os.Getwd()
+    if err != nil {
+	log.Panicf("Hello, genious! Cant get working directory. %s", err)
+    }
+	
+    envFilePath := filepath.Join(wd, "controllers", "variables.env")
+
+    f, err := os.Open(envFilePath)
     if err != nil { log.Fatalf("Can't open env file. %s", err) }
-    f.Close()
+    defer f.Close()
     
     var env models.EnvModel
     if err := json.NewDecoder(f).Decode(&env); err != nil {
