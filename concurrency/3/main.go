@@ -38,13 +38,19 @@ func pinger(pingerPonger chan string) {
 	    fmt.Println("Pinger says: nu blyat' it's for me ")
 	} 
 
+	if !forMe {
+	    return
+	}
+
 	fmt.Println("Pinger says: ping.")
 	pingerPonger <- "ping"
     }
 }
 
 func ponger(pingerPonger chan string) {
+    counter := 0
     for {
+
 	time.Sleep(time.Second)
 	
 	msg, forMe := <- pingerPonger
@@ -53,8 +59,16 @@ func ponger(pingerPonger chan string) {
 	    fmt.Println("Ponger says: nu blyat' it's for me")
 	}
 
+	if counter == maxCount {
+	    fmt.Println("Ponger says: Haha")
+	    close(pingerPonger)
+	    return
+	}
+
 	fmt.Println("Ponger says: pong")
 
 	pingerPonger <- "pong"
+
+	counter++
     }
 }
