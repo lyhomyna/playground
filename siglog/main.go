@@ -10,22 +10,22 @@ import (
 	"net/http"
 
 	"qqweq/siglog/controllers"
+	"qqweq/siglog/controllers/database"
 	"qqweq/siglog/models"
 )
 
 var tpl *template.Template
 var userController *controllers.UserController
 var sessionController *controllers.SessionController
-var dbController *controllers.DatabaseController
 
 func init() {
-    dbController = controllers.NewDatabaseController()
-    if dbController == nil {
+    db := database.NewDatabase()
+    if db == nil {
 	log.Panic("Can't connect to the database.")
     }
 
-    userController = controllers.NewUserController()
-    sessionController = controllers.NewSessionController()
+    userController = controllers.NewUserController(db)
+    sessionController = controllers.NewSessionController(db)
 
     tpl = template.New("")
     tpl, err := tpl.ParseGlob("resources/*.html")
