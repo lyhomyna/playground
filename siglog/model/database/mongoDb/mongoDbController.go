@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"qqweq/siglog/models"
+	"qqweq/siglog/model/models"
 	"qqweq/siglog/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoDbController struct {}
+type MongoDbDao struct {}
 
 var databaseName = "siglog"
 var mongoDbClient *mongo.Client
@@ -36,7 +36,7 @@ func getColl(collName string) (*mongo.Collection, error) {
 
 
 // CreateUser returns userID if User creaion was successfull, or error if failure.
-func (*MongoDbController) CreateUser(user *models.User) (string, error) {
+func (*MongoDbDao) CreateUser(user *models.User) (string, error) {
     if user == nil {
 	return "", errors.New("I can't create new user cuz there is no user, bastard.") 
     }
@@ -56,7 +56,7 @@ func (*MongoDbController) CreateUser(user *models.User) (string, error) {
     return insertedId, nil
 }
 
-func (*MongoDbController) ReadUserByUsername(username string) (*models.User, error) {
+func (*MongoDbDao) ReadUserByUsername(username string) (*models.User, error) {
     coll, err := getColl("users")
     if err != nil {
 	return nil, errors.New(fmt.Sprintf("I can't read user. %s", err))

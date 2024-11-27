@@ -3,20 +3,20 @@ package controllers
 import (
 	"log"
 	"net/http"
-	"qqweq/siglog/controllers/database"
+	"qqweq/siglog/model/database"
 
 	"github.com/google/uuid"
 )
 
 type SessionController struct {
-    db database.DatabaseController
+    db database.SiglogDao
 }
 
 var sessionCookieName = "sessionId"
 var sessions = map[string]string {} // sessionId : username
 var sessionController *SessionController
 
-func NewSessionController(db database.DatabaseController) *SessionController {
+func NewSessionController(db database.SiglogDao) *SessionController {
     if sessionController == nil {
 	sessionController = &SessionController { db }
     }

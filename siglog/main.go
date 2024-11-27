@@ -10,8 +10,8 @@ import (
 	"net/http"
 
 	"qqweq/siglog/controllers"
-	"qqweq/siglog/controllers/database"
-	"qqweq/siglog/models"
+	"qqweq/siglog/model/database"
+	"qqweq/siglog/model/models"
 )
 
 var tpl *template.Template

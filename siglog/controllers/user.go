@@ -3,8 +3,8 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"qqweq/siglog/controllers/database"
-	"qqweq/siglog/models"
+	"qqweq/siglog/model/database"
+	"qqweq/siglog/model/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,11 +20,11 @@ var users = map[string]*models.User{
 }
 
 type UserController struct {
-    db database.DatabaseController
+    db database.SiglogDao
 }
 
 var userController *UserController
-func NewUserController(db database.DatabaseController) *UserController {
+func NewUserController(db database.SiglogDao) *UserController {
     if userController == nil {
 	userController = &UserController{ db }
     }
