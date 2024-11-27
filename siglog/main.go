@@ -65,7 +65,16 @@ func main() {
 func index(w http.ResponseWriter, req *http.Request) {
     if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
 	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
-	tpl.ExecuteTemplate(w, "home.html", userController.GetUserByUsername(username)) 
+	
+	user := userController.GetUserByUsername(username)
+	if user == nil {
+	    // delete session and render "index.html"
+
+	    tpl.ExecuteTemplate(w, "index.html", nil)
+	    return
+	}
+
+	tpl.ExecuteTemplate(w, "home.html", user) 
     } else {
 	tpl.ExecuteTemplate(w, "index.html", nil)
     }
@@ -124,11 +133,12 @@ func register(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// add decoded user to "database" (haha)
-	if err := userController.AddUser(&newUser); err != nil {
+	newUserId, err := userController.AddUser(&newUser);
+	if  err != nil {
 	    log.Println(err)
 	    return
 	}
-	log.Printf("New user '%s' has been added.", newUser.Username)
+	log.Printf("New user '%s' has been added.", newUserId)
 
 	sessionController.CreateSession(newUser.Username, w)
 

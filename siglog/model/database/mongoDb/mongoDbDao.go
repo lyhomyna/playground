@@ -8,6 +8,7 @@ import (
 	"qqweq/siglog/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -20,7 +21,7 @@ var mongoDb *mongo.Database
 // TODO: what a heck context.Context is?; add context
 var usersColl *mongo.Collection
 
-var collections map[string]*mongo.Collection
+var collections = map[string]*mongo.Collection{}
 
 func getColl(collName string) (*mongo.Collection, error) {
     if _, ok := collections[collName]; !ok {
@@ -28,7 +29,7 @@ func getColl(collName string) (*mongo.Collection, error) {
 	if coll == nil {
 	    return nil, errors.New(fmt.Sprintf("WTF is '%s' collection?", collName))
 	}
-	
+
 	collections[collName] = coll
     }
     return collections[collName], nil
@@ -51,24 +52,24 @@ func (*MongoDbDao) CreateUser(user *models.User) (string, error) {
 	return "", errors.New(fmt.Sprintf("I can't create new user. %s", err))
     }
     
-    insertedId := fmt.Sprintf("%v", res.InsertedID)
+    insertedId, _:= res.InsertedID.(primitive.ObjectID)
 
-    return insertedId, nil
+    return insertedId.Hex(), nil
 }
 
 func (*MongoDbDao) ReadUserByUsername(username string) (*models.User, error) {
     coll, err := getColl("users")
     if err != nil {
-	return nil, errors.New(fmt.Sprintf("I can't read user. %s", err))
+	return nil, errors.New(fmt.Sprintf("I can't get user. %s", err))
     }
     
     var user *models.User
-    err = coll.FindOne(context.TODO(), bson.M{"username": username}).Decode(user)
+    err = coll.FindOne(context.TODO(), bson.M{"username": username}).Decode(&user)
     if err != nil {
 	if err == mongo.ErrNoDocuments {
 	    return nil, errors.New("No user found with given username.")
 	} else {
-	    return nil, errors.New(fmt.Sprintf("Can't read user by username. WTF error. %s", err))
+	    return nil, errors.New(fmt.Sprintf("Can't get user by username. WTF error. %s", err))
 	}
     }
 
@@ -82,6 +83,10 @@ func ConnectToMongoDb() error {
     mongoDbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(env.ConnString))
     if err != nil {
 	return errors.New(fmt.Sprintf("Can't get mongo client. %s", err))
+    }
+
+    if err := mongoDbClient.Ping(context.TODO(), nil); err != nil {
+	return errors.New(fmt.Sprintf("Can't get access to db. %s", err))
     }
 
     mongoDb = mongoDbClient.Database(databaseName)

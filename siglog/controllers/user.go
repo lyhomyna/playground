@@ -3,21 +3,12 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
-
-var users = map[string]*models.User{
-    "jamesbond": {
-	Username: "jamesbond",
-	Password: "hashedpassword",
-	Firstname: "James",
-	Lastname: "Bond",
-	Role: "user",
-    },
-}
 
 type UserController struct {
     db database.SiglogDao
@@ -31,20 +22,28 @@ func NewUserController(db database.SiglogDao) *UserController {
     return userController
 }
 
-func (*UserController) GetUserByUsername(username string) (*models.User) {
-    user := users[username]
+func (c *UserController) GetUserByUsername(username string) (*models.User) {
+    user, err := c.db.ReadUserByUsername(username)
+    if err != nil {
+	log.Println(err)
+    }
     return user
 }
 
-func (*UserController) AddUser(user *models.User) error {
+func (c *UserController) AddUser(user *models.User) (string, error) {
     encryptedPassword, err := encryptPassword(user.Password)
     if err != nil {
-	return errors.New(fmt.Sprintf("Failed to add new user. %s", err)) 
+	return "", errors.New(fmt.Sprintf("Failed to add new user. %s", err)) 
     }
     user.Password = encryptedPassword
-    users[user.Username] = user
 
-    return nil
+
+    newUserId, err := c.db.CreateUser(user)
+    if err != nil {
+	return "", errors.New(fmt.Sprintf("Failed to add new user. %s", err))
+    }
+
+    return newUserId, nil
 }
 
 func (*UserController) ComparePasswords(user *models.User, possiblePassword string) error {
