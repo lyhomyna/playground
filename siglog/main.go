@@ -132,13 +132,13 @@ func register(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
 
-	// add decoded user to "database" (haha)
+	// add decoded user to Database (yo, with upper letter mg)
 	newUserId, err := userController.AddUser(&newUser);
 	if  err != nil {
 	    log.Println(err)
 	    return
 	}
-	log.Printf("New user '%s' has been added.", newUserId)
+	log.Printf("New user with is '%s' has been added.", newUserId)
 
 	sessionController.CreateSession(newUser.Username, w)
 
@@ -151,10 +151,10 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	// it's stupid, but I want log
 	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
 
-	sessionController.DeleteSession(w)
+	sessionController.DeleteSession(sessionCookie.Value, w)
 	
 	log.Printf("User '%s' logged out.", username)
-	// from this moment, I don't know who you are
+
 	http.Redirect(w, req, "/", http.StatusSeeOther)
     }
 }

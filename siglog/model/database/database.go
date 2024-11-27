@@ -8,9 +8,15 @@ import (
 )
 
 type SiglogDao interface {
+    // Users
     CreateUser(user *models.User) (string, error)
     ReadUserByUsername(username string) (*models.User, error)
     // TODO: Delete user
+
+    // Sessions
+    CreateSession(username string) (string, error)
+    DeleteSession(sessionId string) error
+    UsernameFromSessionId(sessionId string) (string, error)
 }
 
 var dbController SiglogDao

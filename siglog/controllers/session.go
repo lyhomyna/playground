@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 	"qqweq/siglog/model/database"
-
-	"github.com/google/uuid"
 )
 
 type SessionController struct {
@@ -13,7 +11,6 @@ type SessionController struct {
 }
 
 var sessionCookieName = "sessionId"
-var sessions = map[string]string {} // sessionId : username
 var sessionController *SessionController
 
 func NewSessionController(db database.SiglogDao) *SessionController {
@@ -23,11 +20,13 @@ func NewSessionController(db database.SiglogDao) *SessionController {
     return sessionController
 }
 
-func (*SessionController) CreateSession(username string, w http.ResponseWriter) {
-    sessionId := uuid.NewString() 
+func (c *SessionController) CreateSession(username string, w http.ResponseWriter) {
+    sessionId, err := c.db.CreateSession(username)
+    if err != nil {
+	log.Fatal(err)
+    }
 
-    sessions[sessionId] = username 
-    log.Println("New session has been created.")
+    log.Printf("New session '%s' has been created.", sessionId)
 
     http.SetCookie(w, &http.Cookie {
 	Name: sessionCookieName,
@@ -35,21 +34,29 @@ func (*SessionController) CreateSession(username string, w http.ResponseWriter) 
     })
 }
 
-// TODO: bro, rename this
-func (*SessionController) GetAssosiatedUsername(sessionId string) string {
-    return sessions[sessionId]
+func (c *SessionController) GetAssosiatedUsername(sessionId string) string {
+    username, err := c.db.UsernameFromSessionId(sessionId)
+    if err != nil {
+	log.Fatal(err)
+    }
+
+    return username 
 }
 
-func (*SessionController) DeleteSession(w http.ResponseWriter) {
+func (c *SessionController) DeleteSession(sessionId string, w http.ResponseWriter) {
+    if err := c.db.DeleteSession(sessionId); err != nil {
+	log.Fatal(err)
+    }
+
     http.SetCookie(w, &http.Cookie {
 	Name: sessionCookieName,
 	MaxAge: -1,
-    })	
+    })
 
-    delete(sessions, sessionCookieName)
+    log.Printf("Session '%s' has been deleted.", sessionId)
 }
 
-// TODO: rename it
+// TODO: rename it 
 func (*SessionController) IsAuthenticated(req *http.Request) (*http.Cookie, bool) {
     sessionCookie, err := req.Cookie(sessionCookieName)
     if err != nil {
