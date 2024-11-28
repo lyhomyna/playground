@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"qqweq/siglog/model/models"
-	"qqweq/siglog/utils"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -37,10 +37,10 @@ func getColl(collName string) (*mongo.Collection) {
 }
 
 func ConnectToMongoDb() error {
-    env := utils.GetEnv()
-
+    connString := os.Getenv("CONN_STRING")
+    
     // wtf, this thing doesn't care what to connect to
-    mongoDbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(env.ConnString))
+    mongoDbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connString))
     if err != nil {
 	return fmt.Errorf("Couldn't get mongo client. %s", err)
     }

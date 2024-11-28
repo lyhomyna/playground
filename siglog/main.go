@@ -12,6 +12,8 @@ import (
 	"qqweq/siglog/controllers"
 	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var tpl *template.Template
