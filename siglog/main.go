@@ -108,8 +108,9 @@ func login(w http.ResponseWriter, req *http.Request) {
 		return
 	    }
 	} else {
-	    log.Println("Incorrect username.") // you're fal'shivka
+	    log.Println("User not found.") // you're fal'shivka
 	    w.WriteHeader(http.StatusUnauthorized)
+	    return
 	}
 
 	sessionController.CreateSession(usernamePassword.Username, w)
@@ -185,6 +186,10 @@ func deleteAcc(w http.ResponseWriter, req *http.Request) {
     if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
 	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
 	userController.DeleteUser(username)
+
+	log.Printf("User %s has been deleted.", username)
+
+	sessionController.DeleteSession(sessionCookie.Value, w)
 
 	http.Redirect(w, req, "/", http.StatusSeeOther)
     }
