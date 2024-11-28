@@ -44,13 +44,13 @@ func init() {
 
 func main() {
     http.HandleFunc("/", index)
-    // return a HTML page 
+    // returns a HTML page 
     http.HandleFunc("/login", login)
     http.HandleFunc("/register", register)
     http.HandleFunc("/logout", logout)
 
     // doesn't return a HTML page
-    http.HandleFunc("/users", usersHandler)
+    http.HandleFunc("/users", usersDataHandler)
 
     fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
@@ -119,7 +119,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 func register(w http.ResponseWriter, req *http.Request) {
     if req.Method == http.MethodGet {
 	if _, ok := sessionController.IsAuthenticated(req); ok {
-	    http.Redirect(w, req, "/", http.StatusSeeOther)
+	    http.Redirect(w, req, "/", http.StatusSeeOther) // if you logined, register page isn't for you
 	    return
 	}
 	tpl.ExecuteTemplate(w, "register.html", nil)
@@ -132,13 +132,13 @@ func register(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
 
-	// add decoded user to Database (yo, with upper letter mg)
-	newUserId, err := userController.AddUser(&newUser);
+	// add new user to the Database (yo, with upper letter)
+	newUserId, err := userController.AddUser(&newUser)
 	if  err != nil {
 	    log.Println(err)
 	    return
 	}
-	log.Printf("New user with is '%s' has been added.", newUserId)
+	log.Printf("New user with id '%s' has been added.", newUserId)
 
 	sessionController.CreateSession(newUser.Username, w)
 
@@ -148,7 +148,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 
 func logout(w http.ResponseWriter, req *http.Request) {
     if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
-	// it's stupid, but I want log
+	// it's useless, but I want pretty log
 	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
 
 	sessionController.DeleteSession(sessionCookie.Value, w)
@@ -159,8 +159,8 @@ func logout(w http.ResponseWriter, req *http.Request) {
     }
 }
 
-func usersHandler(w http.ResponseWriter, req *http.Request) {
-    if req.Method == http.MethodGet { // username existence fact or with another words - "USERNAME ALREADY TAKEN" 
+func usersDataHandler(w http.ResponseWriter, req *http.Request) {
+    if req.Method == http.MethodGet { // checking existence of user with some username
 	username := req.URL.Query().Get("id")
 	if username == "" {
 	    log.Println("Can't get username from URL query.")
@@ -169,11 +169,11 @@ func usersHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if user := userController.GetUserByUsername(username); user != nil {
-	    // username not found
+	    // username is taken
 	    w.WriteHeader(http.StatusOK)
 	    return
 	}
-	// usename found
+	// username isn't taken 
 	w.WriteHeader(http.StatusNotFound)
     } 
 }
