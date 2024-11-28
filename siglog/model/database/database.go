@@ -11,6 +11,7 @@ type SiglogDao interface {
     // Users
     CreateUser(user *models.User) (string, error)
     ReadUserByUsername(username string) (*models.User, error)
+    DeleteUser(user *models.User) error 
     // TODO: Delete user
 
     // Sessions
