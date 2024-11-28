@@ -91,6 +91,27 @@ func (*MongoDbDao) ReadUserByUsername(username string) (*models.User, error) {
     return user, nil
 }
 
+func (*MongoDbDao) DeleteUser(user *models.User) error {
+    if user == nil {
+	return errors.New("No user provided to delete.")
+    }
+
+    coll := getColl("users")
+
+    res, err := coll.DeleteOne(context.TODO(), user)
+    if res.DeletedCount != 1 {
+	resErr := errors.New("User not deleted.")
+    
+	if err != nil {
+	    resErr = fmt.Errorf("%w. %w", resErr, err)
+	}
+
+	return resErr 
+    }
+
+    return nil
+}
+
 func (*MongoDbDao) CreateSession(username string) (string, error) {
     sessionId := uuid.NewString() 
     

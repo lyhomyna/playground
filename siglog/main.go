@@ -53,6 +53,7 @@ func main() {
 
     // doesn't return a HTML page
     http.HandleFunc("/users", usersDataHandler)
+    http.HandleFunc("/delete", deleteAcc)
 
     fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
@@ -178,6 +179,15 @@ func usersDataHandler(w http.ResponseWriter, req *http.Request) {
 	// username isn't taken 
 	w.WriteHeader(http.StatusNotFound)
     } 
+}
+
+func deleteAcc(w http.ResponseWriter, req *http.Request) {
+    if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
+	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
+	userController.DeleteUser(username)
+
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+    }
 }
 
 func decodeFromTo(rc io.ReadCloser, target any) error {
