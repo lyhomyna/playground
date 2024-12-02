@@ -3,7 +3,7 @@ package database
 import (
 	"log"
 
-	"qqweq/siglog/model/database/mongoDb"
+	"qqweq/siglog/model/database/mongo"
 	"qqweq/siglog/model/models"
 )
 
