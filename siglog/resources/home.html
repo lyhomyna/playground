@@ -6,9 +6,10 @@
   </head>
   <body>
       <p>Hello, {{ .Firstname }} {{ .Lastname }}!</p>
-      <p>Your username is: {{ .Username }}</p>
+      <p>Your username: {{ .Username }}</p>
       <p>Your passsword looks like this: {{ .Password }}</p>
-      <p>Your role is: {{ .Role }}</p>
+      <p>Your role: {{ .Role }}</p>
       <a href="/logout">logout</a>
+      <a href="/delete">delete account</a>
   </body>
 </html>

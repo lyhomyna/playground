@@ -53,6 +53,7 @@ func main() {
 
     // doesn't return a HTML page
     http.HandleFunc("/users", usersDataHandler)
+    http.HandleFunc("/delete", deleteAcc)
 
     fileServer := http.FileServer(http.Dir("./resources"))
     http.Handle("/public/", http.StripPrefix("/public", fileServer))
@@ -107,8 +108,9 @@ func login(w http.ResponseWriter, req *http.Request) {
 		return
 	    }
 	} else {
-	    log.Println("Incorrect username.") // you're fal'shivka
+	    log.Println("User not found.") // you're fal'shivka
 	    w.WriteHeader(http.StatusUnauthorized)
+	    return
 	}
 
 	sessionController.CreateSession(usernamePassword.Username, w)
@@ -178,6 +180,19 @@ func usersDataHandler(w http.ResponseWriter, req *http.Request) {
 	// username isn't taken 
 	w.WriteHeader(http.StatusNotFound)
     } 
+}
+
+func deleteAcc(w http.ResponseWriter, req *http.Request) {
+    if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {
+	username := sessionController.GetAssosiatedUsername(sessionCookie.Value)
+	userController.DeleteUser(username)
+
+	log.Printf("User %s has been deleted.", username)
+
+	sessionController.DeleteSession(sessionCookie.Value, w)
+
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+    }
 }
 
 func decodeFromTo(rc io.ReadCloser, target any) error {

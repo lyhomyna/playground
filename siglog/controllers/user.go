@@ -54,6 +54,13 @@ func (*UserController) ComparePasswords(user *models.User, possiblePassword stri
     return nil
 }
 
+func (c *UserController) DeleteUser(username string) {
+    user := c.GetUserByUsername(username)
+    if err := c.db.DeleteUser(user); err != nil {
+	log.Fatalf("Couldn't delete user. %s", err)
+    }
+}
+
 func encryptPassword(password string) (string, error) {
     bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
     if err != nil {
