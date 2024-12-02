@@ -11,19 +11,19 @@ import (
 )
 
 type UserController struct {
-    db database.SiglogDao
+    dao database.SiglogDao
 }
 
 var userController *UserController
-func NewUserController(db database.SiglogDao) *UserController {
+func NewUserController(dao database.SiglogDao) *UserController {
     if userController == nil {
-	userController = &UserController{ db }
+	userController = &UserController{ dao }
     }
     return userController
 }
 
 func (c *UserController) GetUserByUsername(username string) (*models.User) {
-    user, err := c.db.ReadUserByUsername(username)
+    user, err := c.dao.ReadUserByUsername(username)
     if err != nil {
 	log.Println(err)
     }
@@ -38,7 +38,7 @@ func (c *UserController) AddUser(user *models.User) (string, error) {
     user.Password = encryptedPassword
 
 
-    newUserId, err := c.db.CreateUser(user)
+    newUserId, err := c.dao.CreateUser(user)
     if err != nil {
 	return "", errors.New(fmt.Sprintf("Failed to add new user. %s", err))
     }
