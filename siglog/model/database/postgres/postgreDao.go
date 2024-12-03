@@ -14,6 +14,7 @@ import (
 
 type PostgresDao struct {
     db *pgx.Conn
+    ctx context.Context
 }
 
 var (
@@ -21,19 +22,20 @@ var (
     daoOnce sync.Once
 )
 
-func NewDao(ctx context.Context) (*PostgresDao, error) {
-    if ctx == nil {
-	ctx = context.Background()
-    }
-
+func GetDao(ctx context.Context) (*PostgresDao, error) {
     var err error
-    daoOnce.Do(func() {
-	var conn *pgx.Conn
-	conn, err = connectToDb(ctx)
-	if err == nil {
-	    dao = &PostgresDao{ conn }
+    if dao == nil {
+	if ctx == nil {
+	    ctx = context.Background()
 	}
-    })
+	daoOnce.Do(func() {
+	    var conn *pgx.Conn
+	    conn, err = connectToDb(ctx)
+	    if err == nil {
+		dao = &PostgresDao{ db: conn, ctx: ctx }
+	    }
+	})
+    }
     
     return dao, err
 }

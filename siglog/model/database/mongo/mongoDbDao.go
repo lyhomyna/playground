@@ -1,11 +1,10 @@
-package mongoDb
+package mongo
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"os"
-	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
 
 	"github.com/google/uuid"
@@ -15,15 +14,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// TODO: context struct field
 type MongoDbDao struct {}
 
-var databaseName = "siglog"
-var mongoDbClient *mongo.Client
-var mongoDb *mongo.Database
-// TODO: what a heck context.Context is?; add context
-var usersColl *mongo.Collection
+var (
+    databaseName = "siglog"
+    mongoDbClient *mongo.Client
+    mongoDb *mongo.Database
+    ctx context.Context
+    usersColl *mongo.Collection
 
-var collections = map[string]*mongo.Collection{}
+    collections = map[string]*mongo.Collection{})
 
 func getColl(collName string) (*mongo.Collection) {
     if _, ok := collections[collName]; !ok {
@@ -37,17 +38,23 @@ func getColl(collName string) (*mongo.Collection) {
     return collections[collName]
 }
 
-// TODO: resolve thread reace
-func ConnectToMongoDb() error {
+// TODO: resolve thread race
+func ConnectToMongoDb(c context.Context) error {
+    if ctx == nil {
+	ctx = context.Background()
+    } else {
+	ctx = c
+    }
+
     connString := os.Getenv("CONN_STRING")
     
     // wtf, this thing doesn't care what to connect to
-    mongoDbClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connString))
+    mongoDbClient, err := mongo.Connect(ctx, options.Client().ApplyURI(connString))
     if err != nil {
 	return fmt.Errorf("Couldn't get mongo client. %s", err)
     }
 
-    if err := mongoDbClient.Ping(context.TODO(), nil); err != nil {
+    if err := mongoDbClient.Ping(ctx, nil); err != nil {
 	return fmt.Errorf("Couldn't get access to db. %w", err)
     }
 
@@ -65,7 +72,7 @@ func (*MongoDbDao) CreateUser(user *models.User) (string, error) {
 
     coll := getColl("users")
 
-    res, err := coll.InsertOne(context.TODO(), user)
+    res, err := coll.InsertOne(ctx, user)
     if err != nil {
 	return "", fmt.Errorf("I can't create new user. %w", err)
     }
@@ -81,7 +88,7 @@ func (*MongoDbDao) ReadUserByUsername(username string) (*models.User, error) {
     var user *models.User
     filter := bson.M{"username": username}
 
-    err := coll.FindOne(context.TODO(), filter).Decode(&user)
+    err := coll.FindOne(ctx, filter).Decode(&user)
     if err != nil {
 	if err == mongo.ErrNoDocuments {
 	    return nil, errors.New("No user found with given username.")
@@ -100,7 +107,7 @@ func (*MongoDbDao) DeleteUser(user *models.User) error {
 
     coll := getColl("users")
 
-    res, err := coll.DeleteOne(context.TODO(), user)
+    res, err := coll.DeleteOne(ctx, user)
     if res.DeletedCount != 1 {
 	resErr := errors.New("User not deleted.")
     
@@ -123,7 +130,7 @@ func (*MongoDbDao) CreateSession(username string) (string, error) {
 	"session-id":  sessionId, 
 	"username": username,
     }
-    _, err := coll.InsertOne(context.TODO(), filter)
+    _, err := coll.InsertOne(ctx, filter)
     if err != nil {
 	return "", fmt.Errorf("Couldn't create new session. %w", err)
     }
@@ -135,7 +142,7 @@ func (*MongoDbDao) DeleteSession(sessionId string) error {
     coll := getColl("sessions")
     
     filter := bson.M { "session-id": sessionId }
-    _, err := coll.DeleteOne(context.TODO(), filter)
+    _, err := coll.DeleteOne(ctx, filter)
     if err != nil {
 	return fmt.Errorf("Couldn't delete session. %w", err)
     }
@@ -152,7 +159,7 @@ func (*MongoDbDao) UsernameFromSessionId(sessionId string) (string, error) {
     filter := bson.M{ "session-id": sessionId }
     opts := options.FindOne().SetProjection(bson.M{"username": 1, "_id": 0})
 
-    err := coll.FindOne(context.TODO(), filter, opts).Decode(&findResObj)
+    err := coll.FindOne(ctx, filter, opts).Decode(&findResObj)
     if err != nil {
 	if err == mongo.ErrNoDocuments {
 	    return "", fmt.Errorf("There is no username associated with session '%s'. %w", sessionId, err)
@@ -162,6 +169,3 @@ func (*MongoDbDao) UsernameFromSessionId(sessionId string) (string, error) {
 
     return findResObj.Username, nil
 }
-
-// Validate if the MongoDbDao has implemented interface SiglogDao
-var _ database.SiglogDao = (*MongoDbDao)(nil)

@@ -21,14 +21,15 @@ var userController *controllers.UserController
 var sessionController *controllers.SessionController
 
 func init() {
-    db := database.NewDatabase()
-    if db == nil {
-	log.Panic("Can't connect to the database.")
+    dao, err := database.GetDao()
+    if err != nil {
+	log.Fatal(err)
     }
 
-    userController = controllers.NewUserController(db)
-    sessionController = controllers.NewSessionController(db)
+    userController = controllers.NewUserController(dao)
+    sessionController = controllers.NewSessionController(dao)
 
+    // Adjust templates. 
     tpl = template.New("")
     tpl, err := tpl.ParseGlob("resources/*.html")
     if err != nil {
@@ -46,12 +47,12 @@ func init() {
 
 func main() {
     http.HandleFunc("/", index)
-    // returns a HTML page 
+    // return an HTML page 
     http.HandleFunc("/login", login)
     http.HandleFunc("/register", register)
     http.HandleFunc("/logout", logout)
 
-    // doesn't return a HTML page
+    // don't return an HTML page
     http.HandleFunc("/users", usersDataHandler)
     http.HandleFunc("/delete", deleteAcc)
 

@@ -7,21 +7,21 @@ import (
 )
 
 type SessionController struct {
-    db database.SiglogDao
+    dao database.SiglogDao
 }
 
 var sessionCookieName = "sessionId"
 var sessionController *SessionController
 
-func NewSessionController(db database.SiglogDao) *SessionController {
+func NewSessionController(dao database.SiglogDao) *SessionController {
     if sessionController == nil {
-	sessionController = &SessionController { db }
+	sessionController = &SessionController { dao }
     }
     return sessionController
 }
 
 func (c *SessionController) CreateSession(username string, w http.ResponseWriter) {
-    sessionId, err := c.db.CreateSession(username)
+    sessionId, err := c.dao.CreateSession(username)
     if err != nil {
 	log.Fatal(err)
     }
@@ -35,7 +35,7 @@ func (c *SessionController) CreateSession(username string, w http.ResponseWriter
 }
 
 func (c *SessionController) GetAssosiatedUsername(sessionId string) string {
-    username, err := c.db.UsernameFromSessionId(sessionId)
+    username, err := c.dao.UsernameFromSessionId(sessionId)
     if err != nil {
 	log.Fatal(err)
     }
@@ -44,7 +44,7 @@ func (c *SessionController) GetAssosiatedUsername(sessionId string) string {
 }
 
 func (c *SessionController) DeleteSession(sessionId string, w http.ResponseWriter) {
-    if err := c.db.DeleteSession(sessionId); err != nil {
+    if err := c.dao.DeleteSession(sessionId); err != nil {
 	log.Fatal(err)
     }
 

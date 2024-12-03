@@ -1,9 +1,9 @@
 package database
 
 import (
-	"log"
-
-	"qqweq/siglog/model/database/mongo"
+	"context"
+	"fmt"
+	"qqweq/siglog/model/database/postgres"
 	"qqweq/siglog/model/models"
 )
 
@@ -19,16 +19,28 @@ type SiglogDao interface {
     UsernameFromSessionId(sessionId string) (string, error)
 }
 
-var dbController SiglogDao
-func NewDatabase() SiglogDao {
-    if err := mongo.ConnectToMongoDb(); err != nil {
-	log.Println(err)
-	return nil
-    }
+var (
+    ctx context.Context
+    dbController SiglogDao
+)
+
+func GetDao() (SiglogDao, error) {
+   // if err := mongo.ConnectToMongoDb(ctx); err != nil {
+   //     log.Println(err)
+   //     return nil
+   // }
     
     if dbController == nil {
-	dbController = &mongo.MongoDbDao{}
+	// dbController = &mongo.MongoDbDao{}
+	dbConteroller, err := &postgres.GetDao(ctx)
+	if err != nil {
+	    return nil, fmt.Errorf("Failure connecting to the PostgreSQL. %w", err)
+	}
     }
 
-    return dbController 
+    return dbController, nil 
 }
+
+// Validate if Dao has implemented interface SiglogDao
+//var _ SiglogDao = (*mongo.MongoDbDao)(nil)
+var _ SiglogDao = (*postgres.PostgresDao)(nil)
