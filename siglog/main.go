@@ -30,7 +30,7 @@ func init() {
     userController = controllers.NewUserController(dao)
     sessionController = controllers.NewSessionController(dao)
 
-    // Adjust templates. 
+    // Templates adjusting. 
     tpl = template.New("")
     tpl, err := tpl.ParseGlob("resources/*.html")
     if err != nil {
@@ -138,7 +138,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 	    return
 	}
 
-	// add new user to the Database (yo, with upper letter)
+	// add new user to the Database (yo, with upper case letter)
 	newUserId, err := userController.AddUser(&newUser)
 	if  err != nil {
 	    log.Println(err)

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -39,16 +40,32 @@ func GetDao(ctx context.Context) (*PostgresDao, error) {
     return dao, err
 }
 
-func (*PostgresDao) CreateUser(user *models.User) (string, error) {
-    panic("not implemented")
-}
+// Associated with USERS functions 
 
+func (pd *PostgresDao) CreateUser(user *models.User) (string, error) {
+    _, err := pd.db.Exec(pd.ctx, "INSERT INTO users (username, password, firstname, lastname, role) VALUES ($1, $2, $3, $4, $5);", user.Username, user.Password, user.Firstname, user.Lastname, user.Role)
+    if err != nil {
+	return "", err 
+    }
+ 
+    // get user ID
+    row := pd.db.QueryRow(pd.ctx, "SELECT id FROM users WHERE username=$1;", user.Username)
+    var id string
+    err = row.Scan(&id)
+    if err != nil {
+	return "", errors.New("WTF, user wasn't created.")
+    }
+
+    return id, nil
+}
 func (*PostgresDao) ReadUserByUsername(username string) (*models.User, error) {
     panic("not implemented")
 }
 func (*PostgresDao) DeleteUser(user *models.User) error {
     panic("not implemented")
 } 
+
+// Associated with SESSIONS functions
 
 func (*PostgresDao) CreateSession(username string) (string, error) {
     panic("not implemented")
