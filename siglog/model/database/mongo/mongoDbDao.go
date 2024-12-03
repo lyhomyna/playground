@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
 
 	"github.com/google/uuid"
@@ -160,3 +161,6 @@ func (*MongoDbDao) UsernameFromSessionId(sessionId string) (string, error) {
 
     return findResObj.Username, nil
 }
+
+// Validate if the MongoDbDao has implemented interface SiglogDao
+var _ database.SiglogDao = (*MongoDbDao)(nil)
