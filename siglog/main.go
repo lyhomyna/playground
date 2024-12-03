@@ -25,6 +25,7 @@ func init() {
     if err != nil {
 	log.Fatal(err)
     }
+    log.Println("Connection to database established.")
 
     userController = controllers.NewUserController(dao)
     sessionController = controllers.NewSessionController(dao)

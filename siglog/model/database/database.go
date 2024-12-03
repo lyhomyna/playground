@@ -29,16 +29,16 @@ func GetDao() (SiglogDao, error) {
    //     log.Println(err)
    //     return nil
    // }
-    
+   var err error
     if dbController == nil {
 	// dbController = &mongo.MongoDbDao{}
-	dbConteroller, err := &postgres.GetDao(ctx)
+	dbController, err = postgres.GetDao(ctx)
 	if err != nil {
 	    return nil, fmt.Errorf("Failure connecting to the PostgreSQL. %w", err)
 	}
     }
 
-    return dbController, nil 
+    return dbController, err
 }
 
 // Validate if Dao has implemented interface SiglogDao

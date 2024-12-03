@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
 )
 
@@ -41,30 +40,24 @@ func GetDao(ctx context.Context) (*PostgresDao, error) {
 }
 
 func (*PostgresDao) CreateUser(user *models.User) (string, error) {
-    // STUB
-    return "STUB", nil
+    panic("not implemented")
 }
 
 func (*PostgresDao) ReadUserByUsername(username string) (*models.User, error) {
-    // STUB
-    return nil, nil
+    panic("not implemented")
 }
 func (*PostgresDao) DeleteUser(user *models.User) error {
-    // STUB
-    return nil 
+    panic("not implemented")
 } 
 
 func (*PostgresDao) CreateSession(username string) (string, error) {
-    // STUB
-    return "STUB", nil 
+    panic("not implemented")
 }
 func (*PostgresDao) DeleteSession(sessionId string) error {
-    // STUB
-    return nil 
+    panic("not implemented")
 }
 func (*PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
-    // STUB
-    return "STUB", nil
+    panic("not implemented")
 }
 
 
@@ -84,6 +77,3 @@ func connectToDb(ctx context.Context) (*pgx.Conn, error)  {
 
     return conn, nil
 }
-
-// Validate if the SiglogDao interface is implemented by PostgresDao
-var _ database.SiglogDao = (*PostgresDao)(nil)
