@@ -56,7 +56,7 @@ func (*UserController) ComparePasswords(user *models.User, possiblePassword stri
 
 func (c *UserController) DeleteUser(username string) {
     user := c.GetUserByUsername(username)
-    if err := c.db.DeleteUser(user); err != nil {
+    if err := c.dao.DeleteUser(user); err != nil {
 	log.Fatalf("Couldn't delete user. %s", err)
     }
 }

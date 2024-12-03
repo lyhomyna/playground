@@ -37,6 +37,7 @@ func getColl(collName string) (*mongo.Collection) {
     return collections[collName]
 }
 
+// TODO: resolve thread reace
 func ConnectToMongoDb() error {
     connString := os.Getenv("CONN_STRING")
     

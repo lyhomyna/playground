@@ -1,4 +1,4 @@
-package database 
+package database
 
 import (
 	"log"
@@ -21,13 +21,13 @@ type SiglogDao interface {
 
 var dbController SiglogDao
 func NewDatabase() SiglogDao {
-    if err := mongoDb.ConnectToMongoDb(); err != nil {
+    if err := mongo.ConnectToMongoDb(); err != nil {
 	log.Println(err)
 	return nil
     }
     
     if dbController == nil {
-	dbController = &mongoDb.MongoDbDao{}
+	dbController = &mongo.MongoDbDao{}
     }
 
     return dbController 
