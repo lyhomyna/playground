@@ -40,7 +40,7 @@ func GetDao(ctx context.Context) (*PostgresDao, error) {
     return dao, err
 }
 
-// Associated with USERS functions 
+// Associated with USER functions 
 
 func (pd *PostgresDao) CreateUser(user *models.User) (string, error) {
     _, err := pd.db.Exec(pd.ctx, "INSERT INTO users (username, password, firstname, lastname, role) VALUES ($1, $2, $3, $4, $5);", user.Username, user.Password, user.Firstname, user.Lastname, user.Role)
@@ -58,11 +58,23 @@ func (pd *PostgresDao) CreateUser(user *models.User) (string, error) {
 
     return id, nil
 }
-func (*PostgresDao) ReadUserByUsername(username string) (*models.User, error) {
-    panic("not implemented")
+func (pd *PostgresDao) ReadUserByUsername(username string) (*models.User, error) {
+    // SELECT * FROM users where username=$1
+    row := pd.db.QueryRow(pd.ctx, "SELECT * FROM users WHERE username=$1", username)
+    var user *models.User
+    err := row.Scan(user)
+    if err != nil {
+	return nil, fmt.Errorf("Cannot read user by username. %w", err)
+    }
+    
+    return user, nil
 }
-func (*PostgresDao) DeleteUser(user *models.User) error {
-    panic("not implemented")
+func (pd *PostgresDao) DeleteUser(user *models.User) error {
+    _, err := pd.db.Exec(pd.ctx, "DELETE FROM users WHERE username=$1", user.Username)
+    if err != nil {
+	err = fmt.Errorf("Cannot delete user %s. %w", user.Username, err)
+    }
+    return err
 } 
 
 // Associated with SESSIONS functions
