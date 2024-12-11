@@ -11,6 +11,7 @@ import (
 func main() {
     s := api.Server{}
     
+    // error channel
     ec := make(chan error, 1)
     go func() {
 	ec <- s.Run(context.Background())
@@ -20,5 +21,7 @@ func main() {
     if err != nil {
 	log.Printf("Server terminated by error: %s", err)
     }
+
+    log.Println("end of main.")
 }
 

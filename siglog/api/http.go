@@ -63,7 +63,8 @@ func NewHttpServer() http.Handler {
     mux.HandleFunc("/users", usersDataHandler)
     mux.HandleFunc("/delete", deleteAcc)
 
-    fileServer := http.FileServer(http.Dir("./resources"))
+    fileServerPath := filepath.Join("..", "..", "resources")
+    fileServer := http.FileServer(http.Dir(fileServerPath))
     mux.Handle("/public/", http.StripPrefix("/public", fileServer))
     mux.Handle("/favicon.ico", http.NotFoundHandler())
 
