@@ -11,39 +11,42 @@ import (
 	"path/filepath"
 
 	"qqweq/siglog/controllers"
+	"qqweq/siglog/model/database"
 	"qqweq/siglog/model/models"
 ) 
 
 var tpl *template.Template
 var userController *controllers.UserController
 var sessionController *controllers.SessionController
+var rootPath = filepath.Join("..") 
 
-func init() {
-    //dao, err := database.GetDao()
-    //if err != nil {
-    //	log.Fatal(err)
-    //}
-    //log.Println("Connection to database established.")
 
-    userController = controllers.NewUserController(nil)
-    sessionController = controllers.NewSessionController(nil)
+func initControllersAndTemplates() {
+    dao, err := database.GetDao()
+    if err != nil {
+    	log.Fatal(err)
+    }
+    log.Println("Connection to database established.")
+
+    userController = controllers.NewUserController(dao)
+    sessionController = controllers.NewSessionController(dao)
 
     tpl = template.New("")
 
-    mainPagePath := filepath.Join("..", "..", "resources", "*.html")
+    mainPagePath := filepath.Join(rootPath, "resources", "*.html")
 
     tpl, err := tpl.ParseGlob(mainPagePath)
     if err != nil {
 	log.Fatalf("Can't parse main page files. %s", err)
     }
 
-    loginPagePath := filepath.Join("..", "..", "resources", "login", "*.html")
+    loginPagePath := filepath.Join(rootPath, "resources", "login", "*.html")
     tpl, err = tpl.ParseGlob(loginPagePath)
     if err != nil {
 	log.Fatalf("Can't parse login page files. %s", err)
     }
 
-    registerPagePath := filepath.Join("..", "..", "resources", "register", "*.html")
+    registerPagePath := filepath.Join(rootPath, "resources", "register", "*.html")
     tpl, err = tpl.ParseGlob(registerPagePath)
     if err != nil {
 	log.Fatalf("Can't parse register page files. %s", err)
@@ -51,6 +54,8 @@ func init() {
 }
 
 func NewHttpServer() http.Handler {
+    initControllersAndTemplates()
+
     mux := http.NewServeMux()
 
     mux.HandleFunc("/", index)
@@ -63,14 +68,18 @@ func NewHttpServer() http.Handler {
     mux.HandleFunc("/users", usersDataHandler)
     mux.HandleFunc("/delete", deleteAcc)
 
+<<<<<<< HEAD
     fileServerPath := filepath.Join("..", "..", "resources")
+=======
+    fileServerPath := filepath.Join(rootPath, "resources")
+>>>>>>> main
     fileServer := http.FileServer(http.Dir(fileServerPath))
     mux.Handle("/public/", http.StripPrefix("/public", fileServer))
     mux.Handle("/favicon.ico", http.NotFoundHandler())
 
     return mux
-
 }
+
 
 func index(w http.ResponseWriter, req *http.Request) {
     if sessionCookie, ok := sessionController.IsAuthenticated(req); ok {

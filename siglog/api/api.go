@@ -44,7 +44,7 @@ func (s *httpServer) Run(ctx context.Context) error {
 	ReadHeaderTimeout: 5 * time.Second, // mitigate risk of Slowloris Attack
     }
     
-    log.Println("Servers is running on port :8080")
+    log.Println("HTTP server is running on port :8080")
     if err := s.http.ListenAndServe(); err != http.ErrServerClosed {
 	return err
     }

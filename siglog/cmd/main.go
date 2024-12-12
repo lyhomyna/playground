@@ -3,10 +3,19 @@ package main
 import (
 	"context"
 	"log"
+	"path/filepath"
 	"qqweq/siglog/api"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 )
+
+var envFilePath = filepath.Join("..", ".env")
+
+func init() {
+    if err := godotenv.Load(envFilePath); err != nil {
+	panic(err)
+    }
+}
 
 func main() {
     s := api.Server{}

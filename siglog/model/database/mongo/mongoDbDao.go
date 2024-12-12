@@ -24,7 +24,8 @@ var (
     ctx context.Context
     usersColl *mongo.Collection
 
-    collections = map[string]*mongo.Collection{})
+    collections = map[string]*mongo.Collection{}
+)
 
 func getColl(collName string) (*mongo.Collection) {
     if _, ok := collections[collName]; !ok {
