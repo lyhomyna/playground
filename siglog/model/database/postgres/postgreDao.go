@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 
@@ -19,6 +20,9 @@ type PostgresDao struct {
 
 var (
     dao *PostgresDao
+
+    // To create postgre DAO only once even if multiple goroutines
+    // will call GetDao function. 
     daoOnce sync.Once
 )
 
@@ -32,6 +36,7 @@ func GetDao(ctx context.Context) (*PostgresDao, error) {
 	    var conn *pgx.Conn
 	    conn, err = connectToDb(ctx)
 	    if err == nil {
+		log.Println("Postgres DAO created.")
 		dao = &PostgresDao{ db: conn, ctx: ctx }
 	    }
 	})
@@ -48,7 +53,6 @@ func (pd *PostgresDao) CreateUser(user *models.User) (string, error) {
 	return "", err 
     }
  
-    // get user ID
     row := pd.db.QueryRow(pd.ctx, "SELECT id FROM users WHERE username=$1;", user.Username)
     var id string
     err = row.Scan(&id)
@@ -59,7 +63,6 @@ func (pd *PostgresDao) CreateUser(user *models.User) (string, error) {
     return id, nil
 }
 func (pd *PostgresDao) ReadUserByUsername(username string) (*models.User, error) {
-    // SELECT * FROM users where username=$1
     row := pd.db.QueryRow(pd.ctx, "SELECT * FROM users WHERE username=$1", username)
     var user *models.User
     err := row.Scan(user)
