@@ -30,9 +30,7 @@ var (
 func GetDao(ctx context.Context) (*PostgresDao, error) {
     var err error
     if dao == nil {
-	if ctx == nil {
-	    ctx = context.Background()
-	}
+	if ctx == nil { ctx = context.Background() }
 	daoOnce.Do(func() {
 	    var conn *pgx.Conn
 	    conn, err = connectToDb(ctx)
@@ -103,10 +101,20 @@ func (pd *PostgresDao) DeleteSession(sessionId string) error {
 
     return err
 }
-func (*PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
-    panic("not implemented")
-}
+func (pd *PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
+    row := pd.db.QueryRow(pd.ctx, "SELECT * FROM sessions WHERE sessionId=$1", sessionId)
 
+    var record struct {
+	sId string
+	username string
+    }
+    err := row.Scan(&record)
+    if err != nil {
+	return "", fmt.Errorf("Couldnt get username from session %s. %w", sessionId, err)
+    }
+
+    return record.username, nil
+}
 
 func connectToDb(ctx context.Context) (*pgx.Conn, error)  { 
     connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
