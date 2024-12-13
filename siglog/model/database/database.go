@@ -21,7 +21,7 @@ type SiglogDao interface {
 
 var (
     ctx context.Context
-    dbController SiglogDao
+    sd SiglogDao
 )
 
 func GetDao() (SiglogDao, error) {
@@ -30,15 +30,15 @@ func GetDao() (SiglogDao, error) {
    //     return nil
    // }
    var err error
-    if dbController == nil {
+    if sd == nil {
 	// dbController = &mongo.MongoDbDao{}
-	dbController, err = postgres.GetDao(ctx)
+	sd, err = postgres.GetDao(ctx)
 	if err != nil {
 	    return nil, fmt.Errorf("Failure connecting to the PostgreSQL. %w", err)
 	}
     }
 
-    return dbController, err
+    return sd, err
 }
 
 // Validate if Dao has implemented interface SiglogDao
