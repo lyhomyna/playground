@@ -119,6 +119,8 @@ func (pd *PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
 func connectToDb(ctx context.Context) (*pgx.Conn, error)  { 
     connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 
+    log.Println(connString)
+
     conn, err := pgx.Connect(ctx, connString)
     if err != nil {
 	err = fmt.Errorf("Failed to connect to the db. %w", err)
