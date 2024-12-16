@@ -58,8 +58,8 @@ func NewHttpServer() http.Handler {
 
     mux := http.NewServeMux()
 
-    mux.HandleFunc("/", index)
     // return an HTML page 
+    mux.HandleFunc("/", index)
     mux.HandleFunc("/login", login)
     mux.HandleFunc("/register", register)
     mux.HandleFunc("/logout", logout)

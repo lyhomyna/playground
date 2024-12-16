@@ -8,24 +8,24 @@ import (
 	"time"
 )
 
-type Server struct {
+type SiglogServer struct {
     http *httpServer 
 }
 
-func (s *Server) Run(ctx context.Context) error {
+func (s *SiglogServer) Run(ctx context.Context) error {
     s.http = &httpServer{}
     ctx, cancel := context.WithCancel(ctx)
 
-    var ec = make(chan error, 1) // http
+    var httpEc = make(chan error, 1)
     go func() {
 	err := s.http.Run(ctx)
 	if err != nil {
 	    err = fmt.Errorf("HTTP server error. %w", err)
 	}
-	ec <- err
+	httpEc <- err
     }()
     
-    err := <- ec
+    err := <- httpEc 
     
     cancel()
     return err
