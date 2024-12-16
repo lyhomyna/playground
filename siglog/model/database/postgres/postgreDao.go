@@ -83,14 +83,14 @@ func (pd *PostgresDao) DeleteUser(user *models.User) error {
 
 func (pd *PostgresDao) CreateSession(username string) (string, error) {
     sessionId := uuid.NewString()
-    _, err := pd.db.Exec(pd.ctx, "INSERT INTO sessions (sessionId, username) VALUES ($1, $2);", sessionId, username)
+    _, err := pd.db.Exec(pd.ctx, "INSERT INTO sessions (id, user_id) VALUES ($1, $2);", sessionId, username)
     if err != nil {
 	return "", fmt.Errorf("Couldn't create session. %w", err)
     }
     return sessionId, nil
 }
 func (pd *PostgresDao) DeleteSession(sessionId string) error {
-    execRes, err := pd.db.Exec(pd.ctx, "DELETE FROM sessions WHERE sessionId=$1;")
+    execRes, err := pd.db.Exec(pd.ctx, "DELETE FROM sessions WHERE id=$1;")
 
     switch {
 	case err != nil:
@@ -102,7 +102,7 @@ func (pd *PostgresDao) DeleteSession(sessionId string) error {
     return err
 }
 func (pd *PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
-    row := pd.db.QueryRow(pd.ctx, "SELECT * FROM sessions WHERE sessionId=$1", sessionId)
+    row := pd.db.QueryRow(pd.ctx, "SELECT * FROM sessions WHERE id=$1", sessionId)
 
     var record struct {
 	sId string
@@ -118,8 +118,6 @@ func (pd *PostgresDao) UsernameFromSessionId(sessionId string) (string, error) {
 
 func connectToDb(ctx context.Context) (*pgx.Conn, error)  { 
     connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
-
-    log.Println(connString)
 
     conn, err := pgx.Connect(ctx, connString)
     if err != nil {

@@ -8,7 +8,7 @@ CREATE TABLE users (
 ); 
 
 CREATE TABLE sessions (
-    session_id TEXT PRIMARY KEY UNIQUE,
+    id TEXT PRIMARY KEY UNIQUE,
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
