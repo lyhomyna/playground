@@ -4,7 +4,7 @@ CREATE TABLE users (
     firstname TEXT NOT NULL,
     lastname TEXT NOT NULL,
     password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
+    role TEXT NOT NULL CHECK (role IN ('admin', 'user'))
 ); 
 
 CREATE TABLE sessions (
