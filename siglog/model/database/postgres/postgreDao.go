@@ -84,6 +84,10 @@ func (pd *PostgresDao) DeleteUser(user *models.User) error {
 func (pd *PostgresDao) CreateSession(username string) (string, error) {
     sessionId := uuid.NewString()
     _, err := pd.db.Exec(pd.ctx, "INSERT INTO sessions (id, user_id) VALUES ($1, $2);", sessionId, username)
+    
+    // TODO: user by username
+    // TODO: or do something with this
+
     if err != nil {
 	return "", fmt.Errorf("Couldn't create session. %w", err)
     }
