@@ -58,8 +58,8 @@ func NewHttpServer() http.Handler {
 
     mux := http.NewServeMux()
 
-    mux.HandleFunc("/", index)
     // return an HTML page 
+    mux.HandleFunc("/", index)
     mux.HandleFunc("/login", login)
     mux.HandleFunc("/register", register)
     mux.HandleFunc("/logout", logout)
@@ -68,11 +68,7 @@ func NewHttpServer() http.Handler {
     mux.HandleFunc("/users", usersDataHandler)
     mux.HandleFunc("/delete", deleteAcc)
 
-<<<<<<< HEAD
-    fileServerPath := filepath.Join("..", "..", "resources")
-=======
     fileServerPath := filepath.Join(rootPath, "resources")
->>>>>>> main
     fileServer := http.FileServer(http.Dir(fileServerPath))
     mux.Handle("/public/", http.StripPrefix("/public", fileServer))
     mux.Handle("/favicon.ico", http.NotFoundHandler())

@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// For loading env variables
 var envFilePath = filepath.Join("..", ".env")
 
 func init() {
@@ -18,9 +19,9 @@ func init() {
 }
 
 func main() {
-    s := api.Server{}
+    s := api.SiglogServer{}
     
-    // error channel
+    // Channel for consuming errors
     ec := make(chan error, 1)
     go func() {
 	ec <- s.Run(context.Background())
@@ -30,7 +31,5 @@ func main() {
     if err != nil {
 	log.Printf("Server terminated by error: %s", err)
     }
-
-    log.Println("end of main.")
 }
 
