@@ -116,7 +116,43 @@ func proceedAdd() {
 }
 
 func proceedList() {
-    panic("Not implemented yet.")
+    // open file
+    expencesFile, err := os.OpenFile("expences.json", os.O_RDWR|os.O_CREATE, 0660)   
+    if err != nil {
+	fmt.Println("Couldn't open expences.json:", err)
+	os.Exit(1)
+    }
+    defer expencesFile.Close()
+
+    // get file stats to get length of file
+    fileStat, err := expencesFile.Stat()
+    if err != nil {
+	fmt.Println("Error getting file stat:", err)
+	expencesFile.Close()
+	os.Exit(1)
+    }
+
+    // read content
+    var expences []Expence 
+
+    if fileStat.Size() > 0 {
+	err = json.NewDecoder(expencesFile).Decode(&expences)
+	if err != nil {
+	    fmt.Println("Error unmarshaling file:", err)
+	    expencesFile.Close()
+	    os.Exit(1)
+	}
+    }
+
+    if len(expences) == 0 {
+	fmt.Println("No expences yet.")
+    } else {
+	fmt.Println("# ID\tDate\tDescription\tAmount")
+	for _, expence := range expences {
+	    created_at := time.Unix(expence.CreatedAt, 0).Format("2006/01/02") 
+	    fmt.Printf("# %d\t%s\t%s\t$%d\n", expence.Id, created_at, expence.Description, expence.Amount)
+	}
+    }
 }
 
 func proceedSummary() {
