@@ -83,12 +83,29 @@ func proceedAdd() {
 
     expences = append(expences, expence)
 
-    fmt.Println(expences)
-
     // write updated content back
-    err = json.NewEncoder(expencesFile).Encode(expences)
+    json, err := json.Marshal(expences)
     if err != nil {
-	fmt.Println("Encoding error:", err)
+	fmt.Println("Error marshaling file:", err)
+	expencesFile.Close()
+	os.Exit(1)
+    }
+
+    fmt.Println(string(json))
+
+    if err = expencesFile.Truncate(0); err != nil {
+	fmt.Println("Error truncating file:", err)
+	expencesFile.Close()
+	os.Exit(1)
+    }
+    if _, err = expencesFile.Seek(0,0); err != nil {
+	fmt.Println("Error seeking file:", err)
+	expencesFile.Close()
+	os.Exit(1)
+    }
+
+    if _, err = expencesFile.Write(json); err != nil {
+	fmt.Println("Error writing to file:", err)
 	expencesFile.Close()
 	os.Exit(1)
     }
