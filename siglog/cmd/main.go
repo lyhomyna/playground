@@ -20,7 +20,7 @@ func init() {
 
 func main() {
     s := api.SiglogServer{}
-    
+
     // Channel for consuming errors
     ec := make(chan error, 1)
     go func() {
