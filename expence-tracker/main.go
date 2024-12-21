@@ -10,6 +10,7 @@ import (
 
 var (
     MIN_CMD_ARGS = 2 
+    expencesFilepath= "expences.json"
 )
 
 func main() {
@@ -60,32 +61,7 @@ func proceedAdd() {
     }
     expences = append(expences, expence)
 
-    // write updated content back
-    json, err := json.Marshal(expences)
-    if err != nil {
-	fmt.Println("Error marshaling file:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
-
-    // clean file
-    if err = expencesFile.Truncate(0); err != nil {
-	fmt.Println("Error truncating file:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
-    if _, err = expencesFile.Seek(0,0); err != nil {
-	fmt.Println("Error seeking file:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
-
-    // write updated content to a file
-    if _, err = expencesFile.Write(json); err != nil {
-	fmt.Println("Error writing to file:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
+    writeExpencesToFile(&expences, expencesFile)
 
     fmt.Printf("# Expence added successfully (ID: %d)\n", expenceId)   
 }
@@ -95,7 +71,10 @@ func proceedList() {
     defer f.Close()
 
     if len(expences) == 0 {
-	fmt.Println("No expences yet.")
+	fmt.Println("# No expences yet.")
+	if err := os.Remove(expencesFilepath); err != nil {
+	    fmt.Println("# Not critical wtf error")
+	}
     } else {
 	fmt.Println("# ID\tDate\tDescription\tAmount")
 	for _, expence := range expences {
@@ -118,7 +97,24 @@ func proceedSummary() {
 }
 
 func proceedDelete() {
-    panic("Not implemented yet.")
+    expencesFile, expences := getExpences()
+    defer expencesFile.Close()
+
+    id := handleDeleteFlags()
+    if len(expences) == 0 || id == -1 {
+	// delete all
+	os.Remove(expencesFilepath)
+    } else {
+	for i, expence := range expences {
+	    if expence.Id == id {
+		expences = append(expences[:i], expences[i+1:]...)
+		break
+	    }
+	}
+	writeExpencesToFile(&expences, expencesFile)
+    }
+
+    fmt.Println("# Expences deleted successfully")   
 }
 
 func handleAddFlags() (string, float64) {
@@ -135,9 +131,23 @@ func handleAddFlags() (string, float64) {
     return *desc, *amount
 }
 
+func handleDeleteFlags() int {
+    del := flag.NewFlagSet("del", flag.ExitOnError)
+
+    id := del.Int("id", -1, "Expence id")
+    // TODO: add --all flag
+
+    if err := del.Parse(os.Args[2:]); err != nil {
+	fmt.Println("Cannot parse delete flags:", err)
+	os.Exit(1)
+    }
+
+    return *id
+}
+
 func getExpences() (*os.File, []Expence) {
     // open file
-    expencesFile, err := os.OpenFile("expences.json", os.O_RDWR|os.O_CREATE, 0660)   
+    expencesFile, err := os.OpenFile(expencesFilepath, os.O_RDWR|os.O_CREATE, 0660)   
     if err != nil {
 	fmt.Println("Couldn't open expences.json:", err)
 	os.Exit(1)
@@ -151,6 +161,7 @@ func getExpences() (*os.File, []Expence) {
 	os.Exit(1)
     }
 
+    // TODO: turn this to a map
     // read content
     var expences []Expence 
 
@@ -164,4 +175,33 @@ func getExpences() (*os.File, []Expence) {
     }
 
     return expencesFile, expences
+}
+
+func writeExpencesToFile(expences *[]Expence, file *os.File) {
+    // write updated content back
+    json, err := json.Marshal(expences)
+    if err != nil {
+	fmt.Println("Error marshaling file:", err)
+	file.Close()
+	os.Exit(1)
+    }
+
+    // clean file
+    if err = file.Truncate(0); err != nil {
+	fmt.Println("Error truncating file:", err)
+	file.Close()
+	os.Exit(1)
+    }
+    if _, err = file.Seek(0,0); err != nil {
+	fmt.Println("Error seeking file:", err)
+	file.Close()
+	os.Exit(1)
+    }
+
+    // write updated content to a file
+    if _, err = file.Write(json); err != nil {
+	fmt.Println("Error writing to file:", err)
+	file.Close()
+	os.Exit(1)
+    }
 }
