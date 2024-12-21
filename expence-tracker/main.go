@@ -42,34 +42,9 @@ type Expence struct {
 
 func proceedAdd() {
     desc, amount := handleAddFlags()
-
-    // open file
-    expencesFile, err := os.OpenFile("expences.json", os.O_RDWR|os.O_CREATE, 0660)   
-    if err != nil {
-	fmt.Println("Couldn't open expences.json:", err)
-	os.Exit(1)
-    }
+    
+    expencesFile, expences := getExpences()
     defer expencesFile.Close()
-
-    // get file stats to get length of file
-    fileStat, err := expencesFile.Stat()
-    if err != nil {
-	fmt.Println("Error getting file stat:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
-
-    // read content
-    var expences []Expence 
-
-    if fileStat.Size() > 0 {
-	err = json.NewDecoder(expencesFile).Decode(&expences)
-	if err != nil {
-	    fmt.Println("Error unmarshaling file:", err)
-	    expencesFile.Close()
-	    os.Exit(1)
-	}
-    }
 
     // update content (add new expence) 
     var expenceId int 
@@ -116,33 +91,8 @@ func proceedAdd() {
 }
 
 func proceedList() {
-    // open file
-    expencesFile, err := os.OpenFile("expences.json", os.O_RDWR|os.O_CREATE, 0660)   
-    if err != nil {
-	fmt.Println("Couldn't open expences.json:", err)
-	os.Exit(1)
-    }
-    defer expencesFile.Close()
-
-    // get file stats to get length of file
-    fileStat, err := expencesFile.Stat()
-    if err != nil {
-	fmt.Println("Error getting file stat:", err)
-	expencesFile.Close()
-	os.Exit(1)
-    }
-
-    // read content
-    var expences []Expence 
-
-    if fileStat.Size() > 0 {
-	err = json.NewDecoder(expencesFile).Decode(&expences)
-	if err != nil {
-	    fmt.Println("Error unmarshaling file:", err)
-	    expencesFile.Close()
-	    os.Exit(1)
-	}
-    }
+    f, expences := getExpences()
+    defer f.Close()
 
     if len(expences) == 0 {
 	fmt.Println("No expences yet.")
@@ -175,4 +125,35 @@ func handleAddFlags() (string, int) {
     }
 
     return *desc, *amount
+}
+
+func getExpences() (*os.File, []Expence) {
+    // open file
+    expencesFile, err := os.OpenFile("expences.json", os.O_RDWR|os.O_CREATE, 0660)   
+    if err != nil {
+	fmt.Println("Couldn't open expences.json:", err)
+	os.Exit(1)
+    }
+
+    // get file stats to get length of file
+    fileStat, err := expencesFile.Stat()
+    if err != nil {
+	fmt.Println("Error getting file stat:", err)
+	expencesFile.Close()
+	os.Exit(1)
+    }
+
+    // read content
+    var expences []Expence 
+
+    if fileStat.Size() > 0 {
+	err = json.NewDecoder(expencesFile).Decode(&expences)
+	if err != nil {
+	    fmt.Println("Error unmarshaling file:", err)
+	    expencesFile.Close()
+	    os.Exit(1)
+	}
+    }
+
+    return expencesFile, expences
 }
