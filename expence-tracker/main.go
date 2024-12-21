@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 var (
@@ -36,6 +37,7 @@ type Expence struct {
     Id int	`json:"id"`
     Description string `json:"desc"`
     Amount int `json:"amount"`
+    CreatedAt int64 `json:"created_at"`
 }
 
 func proceedAdd() {
@@ -79,8 +81,8 @@ func proceedAdd() {
 	Id: expenceId,
 	Description: desc,
 	Amount: amount,
+	CreatedAt: time.Now().Unix(),
     }
-
     expences = append(expences, expence)
 
     // write updated content back
