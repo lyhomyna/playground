@@ -49,7 +49,7 @@ func proceedAdd() {
     }
     defer expencesFile.Close()
 
-    // get file stat to get length of file
+    // get file stats to get length of file
     fileStat, err := expencesFile.Stat()
     if err != nil {
 	fmt.Println("Error getting file stat:", err)
@@ -69,7 +69,7 @@ func proceedAdd() {
 	}
     }
 
-    // add new expence 
+    // update content (add new expence) 
     var expenceId int 
     if len(expences) != 0 {
 	expenceId = expences[len(expences)-1].Id + 1
@@ -91,8 +91,7 @@ func proceedAdd() {
 	os.Exit(1)
     }
 
-    fmt.Println(string(json))
-
+    // clean file
     if err = expencesFile.Truncate(0); err != nil {
 	fmt.Println("Error truncating file:", err)
 	expencesFile.Close()
@@ -104,6 +103,7 @@ func proceedAdd() {
 	os.Exit(1)
     }
 
+    // write updated content to a file
     if _, err = expencesFile.Write(json); err != nil {
 	fmt.Println("Error writing to file:", err)
 	expencesFile.Close()
