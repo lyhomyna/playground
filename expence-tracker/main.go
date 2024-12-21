@@ -36,7 +36,7 @@ func main() {
 type Expence struct {
     Id int	`json:"id"`
     Description string `json:"desc"`
-    Amount int `json:"amount"`
+    Amount float64 `json:"amount"`
     CreatedAt int64 `json:"created_at"`
 }
 
@@ -100,24 +100,32 @@ func proceedList() {
 	fmt.Println("# ID\tDate\tDescription\tAmount")
 	for _, expence := range expences {
 	    created_at := time.Unix(expence.CreatedAt, 0).Format("2006/01/02") 
-	    fmt.Printf("# %d\t%s\t%s\t$%d\n", expence.Id, created_at, expence.Description, expence.Amount)
+	    fmt.Printf("# %d\t%s\t%s\t$%.2f\n", expence.Id, created_at, expence.Description, expence.Amount)
 	}
     }
 }
 
 func proceedSummary() {
-    panic("Not implemented yet.")
+    f, expences := getExpences()
+    defer f.Close()
+
+    var summary float64
+    for _, expence := range expences {
+	summary += expence.Amount 
+    }
+    
+    fmt.Printf("# Total expences: $%.2f\n", summary)
 }
 
 func proceedDelete() {
     panic("Not implemented yet.")
 }
 
-func handleAddFlags() (string, int) {
+func handleAddFlags() (string, float64) {
     add := flag.NewFlagSet("add", flag.ExitOnError)
 
     desc := add.String("description", "", "A description for expence.")
-    amount := add.Int("amount", 0, "Expence amount.")
+    amount := add.Float64("amount", 0, "Expence amount.")
 
     if err := add.Parse(os.Args[2:]); err != nil {
 	fmt.Println("Cannot parse add flags:", err)
