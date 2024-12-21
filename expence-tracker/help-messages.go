@@ -10,21 +10,22 @@ func helpText() string {
 func helpAddText() string {
     return `
 Usage example: 
-    $ expence-tracer add --description "Lunch" --amount 20
+    $ expence-tracker add --description "Lunch" --amount 20
 `
 }
 
 func helpDeleteText() string {
     return `
 Usage example: 
-    $ expence-tracer delete --id 3
+    $ expence-tracker delete        // delete all
+    $ expence-tracker delete --id 3 // deleting by id
 `
 }
 
 func helpSummaryText() string {
     return `
 Usage example: 
-    $ expence-tracer summary		// to print all summary
-    $ expence-tracer summary --month 8  // to print summary by month
+    $ expence-tracker summary		 // print all summary
+    $ expence-tracker summary --month 8  // print summary by month
 `
 }
