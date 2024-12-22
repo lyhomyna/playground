@@ -22,8 +22,7 @@ var CommandDel = &cobra.Command{
 var id int 
 
 func del(cmd *cobra.Command, args []string) {
-    expencesFile, expences := getExpences()
-    defer expencesFile.Close()
+    expences := getExpences()
 
     if len(expences) == 0 || id == -1 {
 	// delete all
@@ -35,7 +34,7 @@ func del(cmd *cobra.Command, args []string) {
 		break
 	    }
 	}
-	writeExpencesToFile(&expences, expencesFile)
+	writeExpences(expences)
     }
 
     fmt.Println("# Expences deleted successfully")   

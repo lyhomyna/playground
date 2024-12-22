@@ -17,8 +17,7 @@ var commandSummary = &cobra.Command {
 }
 
 func summary(cmd *cobra.Command, args []string) {
-    f, expences := getExpences()
-    defer f.Close()
+    expences := getExpences()
 
     var summary float64
     for _, expence := range expences {

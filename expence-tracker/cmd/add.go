@@ -10,7 +10,10 @@ import (
 
 func init() {
     CommandAdd.Flags().StringVar(&desc, "description", "", "A description for expence.")
-    CommandAdd.Flags().Float64Var(&amount, "amount", 0, "Expence amount.")
+    CommandAdd.Flags().Float64Var(&amount, "amount", 0.0, "Expence amount.")
+
+    CommandAdd.MarkFlagRequired("description")
+    CommandAdd.MarkFlagRequired("amount")
 
     rootCmd.AddCommand(CommandAdd)
 }
@@ -27,8 +30,7 @@ var (
 )
 
 func add(cmd *cobra.Command, args []string) {
-    expencesFile, expences := getExpences()
-    defer expencesFile.Close()
+    expences := getExpences()
 
     // update content (add new expence) 
     var expenceId int 
@@ -44,7 +46,7 @@ func add(cmd *cobra.Command, args []string) {
     }
     expences = append(expences, expence)
 
-    writeExpencesToFile(&expences, expencesFile)
+    writeExpences(expences)
 
     fmt.Printf("# Expence added successfully (ID: %d)\n", expenceId)   
 }

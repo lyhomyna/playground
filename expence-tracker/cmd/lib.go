@@ -12,13 +12,14 @@ var (
     expencesFilepath= "expences.json"
 )
 
-func getExpences() (*os.File, []models.Expence) {
+func getExpences() []models.Expence {
     // open file
     expencesFile, err := os.OpenFile(expencesFilepath, os.O_RDWR|os.O_CREATE, 0660)   
     if err != nil {
 	fmt.Println("Couldn't open expences.json:", err)
 	os.Exit(1)
     }
+    defer expencesFile.Close()
 
     // get file stats to get length of file
     fileStat, err := expencesFile.Stat()
@@ -41,10 +42,17 @@ func getExpences() (*os.File, []models.Expence) {
 	}
     }
 
-    return expencesFile, expences
+    return expences
 }
 
-func writeExpencesToFile(expences *[]models.Expence, file *os.File) {
+func writeExpences(expences []models.Expence) {
+    file, err := os.OpenFile(expencesFilepath, os.O_RDWR|os.O_CREATE, 0660)   
+    if err != nil {
+	fmt.Println("Couldn't open expences.json:", err)
+	os.Exit(1)
+    }
+    defer file.Close()
+
     // write updated content back
     json, err := json.Marshal(expences)
     if err != nil {

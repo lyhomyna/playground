@@ -19,8 +19,7 @@ var commandList = &cobra.Command {
 }
 
 func list(cmd *cobra.Command, args []string) {
-    f, expences := getExpences()
-    defer f.Close()
+    expences := getExpences()
 
     if len(expences) == 0 {
 	fmt.Println("# No expences yet.")
