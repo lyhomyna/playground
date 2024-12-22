@@ -8,7 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CommandList = &cobra.Command {
+func init() {
+    rootCmd.AddCommand(commandList)
+}
+
+var commandList = &cobra.Command {
     Use: "list",
     Short: "To list all expences.",
     Run: list,

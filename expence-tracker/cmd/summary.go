@@ -6,7 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CommandSummary = &cobra.Command { 
+func init() {
+    rootCmd.AddCommand(commandSummary)
+}
+
+var commandSummary = &cobra.Command { 
     Use: "summary",
     Short: "To summarize expences amount.",
     Run: summary,

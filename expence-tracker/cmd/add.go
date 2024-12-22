@@ -8,6 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+    CommandAdd.Flags().StringVar(&desc, "description", "", "A description for expence.")
+    CommandAdd.Flags().Float64Var(&amount, "amount", 0, "Expence amount.")
+
+    rootCmd.AddCommand(CommandAdd)
+}
+
 var CommandAdd = &cobra.Command{
     Use: "add",
     Short: "To save expence.",
@@ -18,11 +25,6 @@ var (
     desc string
     amount float64
 )
-
-func init() {
-    CommandAdd.Flags().StringVar(&desc, "description", "", "A description for expence.")
-    CommandAdd.Flags().Float64Var(&amount, "amount", 0, "Expence amount.")
-}
 
 func add(cmd *cobra.Command, args []string) {
     expencesFile, expences := getExpences()

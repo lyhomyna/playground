@@ -7,19 +7,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-    id int
-
-    CommandDel = &cobra.Command{
-	Use: "delete",
-	Short: "To delete expences.",
-	Run: del,
-    }
-)
-
 func init() {
     CommandDel.Flags().IntVar(&id, "id", -1, "Expence id")
+
+    rootCmd.AddCommand(CommandDel)
 }
+
+var CommandDel = &cobra.Command{
+    Use: "delete",
+    Short: "To delete expences.",
+    Run: del,
+}
+
+var id int 
 
 func del(cmd *cobra.Command, args []string) {
     expencesFile, expences := getExpences()
