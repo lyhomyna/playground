@@ -10,7 +10,7 @@ import (
 )
 
 // For loading env variables
-var envFilePath = filepath.Join("..", ".env")
+var envFilePath = filepath.Join(".env")
 
 func init() {
     if err := godotenv.Load(envFilePath); err != nil {
