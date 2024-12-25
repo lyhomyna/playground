@@ -1,4 +1,4 @@
-module qqweq/playground/expence-tracker
+module qqweq/playground/roadmap/expence-tracker
 
 go 1.22.5
 

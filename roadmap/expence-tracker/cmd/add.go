@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"qqweq/playground/expence-tracker/models"
+	"qqweq/playground/roadmap/expence-tracker/models"
 	"time"
 
 	"github.com/spf13/cobra"

@@ -64,7 +64,6 @@ func ConnectToMongoDb(c context.Context) error {
     return nil
 }
 
-
 // CreateUser returns userID if User creaion was successfull, or error if failure.
 func (*MongoDbDao) CreateUser(user *models.User) (string, error) {
     if user == nil {
